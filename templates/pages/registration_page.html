@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Webpage Design</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/style_registration.css') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='assets/images/logos/logo.png') }}" />
+</head>
+<body>
+
+    <div class="main">
+        <div class="navbar" style="display: flex; align-items: center;">
+    <div class="icon" style="display: flex; align-items: center;">
+        <img src="{{ url_for('static', filename='assets/images/logos/logo.png') }}" alt="Icon" style="width: 40px; height: 40px; margin-top: 10px;"> <!-- Adjust width and height as needed -->
+        <h2 class="logo">DeDuplication</h2>
+    </div>
+</div>
+        <div class="content">
+                    <!-- message flashing -->
+                    {% with messages = get_flashed_messages()%}
+                        {% if messages%}
+                            {% for message in messages%}
+                                <p>{{message}}</p>
+                            {%endfor%}
+                        {%endif%}
+                    {%endwith%}
+
+                   <div class="form">
+                        <form method="POST" action="/userRegistration">
+                            <h2>Registration</h2>
+                            <input type="text" name="name" placeholder="Enter Name" required>
+                            <input type="text" name="phone" placeholder="Enter Phone No." required>
+                            <input type="text" name="usertype" placeholder="Enter user type" required>
+                            <input type="email" name="email" placeholder="Enter Email" required>
+                            <input type="password" name="password" placeholder="Enter Password" required>
+                            <input type="password" name="repassword" placeholder="ReEnter Password" required>
+                            <button type="submit" class="btnn">Register</button>
+                        </form>
+                   </div>
+
+                <!-- notification -->
+                <div id="notification" class="bg-gray-100 p-4 w-full max-w-md mr-3 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 text-right">Input Validation Info</h2>
+                    <div class="space-y-4 text-right">
+                        <!-- Notification 1 -->
+                        <div class="flex items-start justify-end">
+                            <p class="text-gray-800 mr-4"><span class="text-blue-500">&#10003;</span> Phone no. should have 10 digits like 6234567896.</p>
+                            <div class="bg-blue-500 rounded-full h-3 w-3 mt-1.5"></div>
+                        </div>
+                        <!-- Notification 2 -->
+                        <div class="flex items-start justify-end">
+                            <p class="text-gray-800 mr-4"><span class="text-green-500">&#10003;</span> Email id should have pattern like developer@gmail.com</p>
+                            <div class="bg-green-500 rounded-full h-3 w-3 mt-1.5"></div>
+                        </div>
+                        <!-- Notification 3 -->
+                        <div class="flex items-start justify-end">
+                            <p class="text-gray-800 mr-4"><span class="text-red-500">&#10003;</span> Password should contain at least one lowercase letter,one uppercase letter, one digit, minimum length of 8 characters </p>
+                            <div class="bg-red-500 rounded-full h-3 w-3 mt-1.5"></div>
+                        </div>
+                        <!-- Add more notifications as needed -->
+                    </div>
+                </div>
+
+
+
+
+                    </div>
+                </div>
+</body>
+</html>

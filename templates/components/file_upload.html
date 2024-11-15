@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include 'partials/head.html' %}
+    <title>File Upload</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        /* Custom CSS to ensure dropdown arrow visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px;
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px;
+        }
+
+        /* new added */
+        #dataTableSection {
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+
+
+    </style>
+    <style>
+        .flash {
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 5px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+
+    </style>
+</head>
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <div class="w-full page-wrapper xl:px-6 px-0">
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+                        <div class="card mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-upload ps-2 text-4xl"></i>File Upload</h6>
+                                <!-- adding flash message -->
+								{% with messages = get_flashed_messages(with_categories=True) %}
+									{% if messages %}
+										{% for category, message in messages %}
+											<div class="flash {{ category }}">{{ message }}</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
+                                <div class="card">
+                                    <section class="flex flex-col items-center pt-6">
+                                        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+                                                <form id="uploadForm" class="space-y-4 md:space-y-6 flex flex-col items-center mx-2 md:mx-8 lg:mx-16" method="POST" enctype="multipart/form-data" action="/fileupload">
+                                                    <!-- Form Field 1 -->
+                                                    <div class="w-full max-w-md">
+                                                        <label class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white" for="file_input">Upload file</label>
+                                                        <input class="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-900 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" name="file_input" type="file">
+                                                    </div>
+                                                    <div class="w-full max-w-md">
+                                                        <label class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white" for="file_input">Data separator Symbol</label>
+                                                        <input class="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-900 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="text_input" name="text_input" type="text">
+                                                    </div>
+
+                                                    <!-- Buttons -->
+                                                    <div class="flex justify-center gap-4 mt-4 mb-4 w-full max-w-md">
+                                                        <a href="{{ url_for('databaseConnection') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Prev</a>
+                                                        <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Upload</button>
+                                                        <button type="button" id="showButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <a href="{{ url_for('dataPreprocessing') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Next</a>
+                                                    </div>
+                                                </form>
+                                                <!-- Data Table and Download Buttons -->
+                                                <div class="w-full mt-6">
+                                                    <!-- Initially hidden elements -->
+                                                    <div id="dataTableSection" class="hidden">
+                                                        <!-- Table Name -->
+                                                        <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                                        <div class="flex justify-between mb-4 px-4">
+                                                            <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                            <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                                        </div>
+                                                        <!-- Data Table Container -->
+                                                        <div id="dataTableContainer" class="w-full px-4"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+            </div>
+        </div>
+        <!-- End of project -->
+    </main>
+    {% include "partials/scripts.html" %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const showButton = document.getElementById('showButton');
+            const dataTableSection = document.getElementById('dataTableSection');
+            const dataTableContainer = document.getElementById('dataTableContainer');
+
+            let isTableVisible = false; // Track visibility state
+
+            showButton.addEventListener('click', function() {
+                if (isTableVisible) {
+                    dataTableSection.classList.add('hidden');
+                    showButton.textContent = 'Show';
+                    isTableVisible = false;
+                } else {
+                    fetch('/showdata')
+                        .then(response => response.json())
+                        .then(data => {
+
+                            if (data.len_is_zero) {
+                                alert("No data available to display!"); // Show alert for empty data
+                                return; // Stop further execution if no data
+                            }
+
+                            dataTableContainer.innerHTML = data.data_table;
+                            $('#dataTableContainer table').DataTable({
+                                "pagingType": "full_numbers",
+                                "pageLength": 5,
+                                "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                            });
+                            dataTableSection.classList.remove('hidden');
+                            showButton.textContent = 'Hide';
+                            isTableVisible = true;
+                        });
+                }
+            });
+
+            document.getElementById('downloadCsv').addEventListener('click', function() {
+                window.location.href = '/download/csv';
+            });
+
+            document.getElementById('downloadXlsx').addEventListener('click', function() {
+                window.location.href = '/download/xlsx';
+            });
+        });
+    </script>
+</body>
+
+</html>

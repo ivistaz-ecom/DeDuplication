@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'partials/head.html' %}
+    <title>Data Analysis</title>
+    <style>
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .card {
+            flex: 1;
+            min-width: 18%; /* Adjust as needed */
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .chart-card {
+            flex: 1;
+            max-width: 48%; /* Adjust as needed */
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-card canvas {
+            width: 100% !important;
+            height: 300px !important; /* Adjust height as needed */
+        }
+        .section-title {
+            width: 100%;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .card-body {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .card-heading {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+    </style>
+    <style>
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="bg-surface">
+
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <!-- Sidebar and other layout elements -->
+            <div class="w-full page-wrapper xl:px-6 px-0">
+
+                <!-- Main Content -->
+                <main class="h-full max-w-full" id="main-content">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <!-- Section Title -->
+                        <section class="section-title">
+                            <i class="ti ti-chart-bar ps-2 text-2xl"></i> <span>Data Analysis</span>
+                            <section style="font-weight: normal;font-size: medium">
+                                <span style="margin-left: 2%;color: blue"><b>{{ card_data.collection_name }}</b></span>
+                            </section>
+                        </section>
+                        <!-- Section Title End -->
+
+                        <!-- Cards in one row -->
+                        <div class="card-container mt-5">
+                            <!-- Card 1 -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-heading">Data Length</div>
+                                    <div>{{ card_data.data_length }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2 -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-heading">Source Count</div>
+                                    <div>{{ card_data.source_count }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Card 3 -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-heading">Biz Sector Count</div>
+                                    <div>{{ card_data.biz_sector_count }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Card 4 -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-heading">Max. record City</div>
+                                    <div>{{ card_data.max_record_city }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Card 5 -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-heading">Max. record State</div>
+                                    <div>{{ card_data.max_record_state }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts in one row -->
+                        <div class="chart-container mt-5">
+                            <!-- Bar Chart -->
+                            <div class="chart-card">
+                                <h3 class="text-center text-lg font-semibold">Data Source</h3>
+                                <canvas id="barChart"></canvas>
+                            </div>
+
+                            <!-- Pie Chart -->
+                            <div class="chart-card">
+                                <h3 class="text-center text-lg font-semibold">Top 5 State</h3>
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+
+            </div>
+        </div>
+        <!-- End of project -->
+
+    </main>
+
+    {% include "partials/scripts.html" %}
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+
+        // Initialize Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.bar_chart.labels|tojson }},
+                datasets: [{
+                    label: 'Data Source', // Label for the dataset
+                    data: {{ chart_data.bar_chart.data|tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.dataset.label + ': ' + tooltipItem.raw;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ chart_data.pie_chart.labels|tojson }},
+                datasets: [{
+                    label: 'Top 5 State', // Label for the dataset
+                    data: {{ chart_data.pie_chart.data|tojson }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.dataset.label + ': ' + tooltipItem.raw;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'partials/head.html' %}
+    <title>Export Data</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        /* Custom CSS for dropdown visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px; /* Space for the arrow */
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px; /* Adjust size of the arrow */
+        }
+
+        .select-container {
+            position: relative;
+            flex: 1; /* Allow the container to grow and fill available space */
+            min-width: 400px; /* Ensure minimum width */
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%; /* Match the width of the input */
+            max-height: 80px; /* Adjust to show options comfortably */
+            overflow-y: auto; /* Scroll if there are more options */
+            background-color: white; /* White background */
+            color: black; /* Black text */
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none; /* Hidden by default */
+            z-index: 10; /* Ensure it appears above other elements */
+        }
+
+        .dropdown-options ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown-options li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options li:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+
+        .selected-option {
+            cursor: pointer;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px; /* Make the border rounded */
+            background-color: white; /* White background for the input */
+            color: black; /* Black text for the input */
+            width: 100%; /* Ensure the input takes full width of container */
+            box-sizing: border-box; /* Ensure padding and border are included in width */
+        }
+
+        /* DataTable styles */
+        #dataTableSection {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+        /* new added */
+        #dataTableSection {
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+    </style>
+    <style>
+        /* Modal styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* On top of other elements */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%; /* Adjusted width to one-third of the current size */
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <style>
+    .btn-circle {
+            width: 200px; /* Adjust as needed */
+            height: 50px; /* Adjust as needed */
+            border-radius: 30%;
+            margin-left: 30px;
+        }
+    .download_section{
+        padding-left: 20%;
+        padding-right: 20%;
+    }
+    #popup {
+            display: none;
+        }
+    #popup{
+        margin-top:1%;
+        margin-left: 24%;
+        margin-right: 20%;
+        padding: 3px;
+    }
+    .prepare_popup_button {
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 20%;
+    }
+
+    .space-x-2 > * + * {
+        margin-left: 50px; /* 10px space between buttons */
+    }
+    #popup_internal{
+        padding: 4px;
+    }
+    </style>
+</head>
+
+<body class="bg-surface ">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <!-- Sidebar and other layout elements -->
+            <div class="w-full page-wrapper xl:px-6 px-0">
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <div class="card mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center">
+                                    <i class="ti ti-layout-dashboard ps-2 text-4xl"></i>
+                                    Dashboard Data
+                                </h6>
+                                <!-- outer side  -->
+                                <!-- Container for Horizontal Sections -->
+                            <div>
+                                <!-- new code -->
+                                <div class="flex flex-row justify-center items-start p-4 space-x-4 w-full" style="gap: 20px;">
+
+                                    <!-- New Input Field -->
+                                    <div class="w-1/4">
+                                        <label for="columnNameInputField" class="font-bold block mb-2">Id column name</label>
+                                        <input id="columnNameInputField" type="text" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="id">
+                                    </div>
+                                    <!-- First Input Field -->
+                                    <div class="w-1/4">
+                                        <label for="inputField1" class="font-bold block mb-2">From Id</label>
+                                        <input id="inputField1" type="text" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0">
+                                    </div>
+
+                                    <!-- Second Input Field -->
+                                    <div class="w-1/4">
+                                        <label for="inputField2" class="font-bold block mb-2">To Id</label>
+                                        <input id="inputField2" type="text" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0">
+                                    </div>
+
+                                </div>
+
+                                <!-- new code end -->
+
+                            <div class="flex items-center space-x-4 p-4 download_section">
+                                <label for="inputField" class="font-bold">Download database:</label>
+                                <button id="openPopup" class="btn-circle bg-blue-600 text-white flex items-center justify-center hover:bg-blue-400">
+                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M8.737 8.737a21.49 21.49 0 0 1 3.308-2.724m0 0c3.063-2.026 5.99-2.641 7.331-1.3 1.827 1.828.026 6.591-4.023 10.64-4.049 4.049-8.812 5.85-10.64 4.023-1.33-1.33-.736-4.218 1.249-7.253m6.083-6.11c-3.063-2.026-5.99-2.641-7.331-1.3-1.827 1.828-.026 6.591 4.023 10.64m3.308-9.34a21.497 21.497 0 0 1 3.308 2.724m2.775 3.386c1.985 3.035 2.579 5.923 1.248 7.253-1.336 1.337-4.245.732-7.295-1.275M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/>
+                                    </svg>
+                                    <span>Prepare Data</span>
+                                </button>
+                                <button id="button2" class="download_database btn-circle bg-blue-600 text-white flex items-center justify-center hover:bg-blue-400">
+                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
+                                    </svg>
+                                    <span>Download Data</span>
+                                </button>
+                            </div>
+                                <!-- Popup Modal -->
+                                <div id="popup" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+                                    <div id="popup_internal" class="bg-white border border-black p-6 rounded-lg shadow-lg w-1/3 max-w-md mx-4">
+                                        <div id="resultMessage" class="mt-4 text-center text-lg font-bold"></div>
+                                        <h2 class="text-lg font-bold mb-4 mx-3">Are you sure you want to prepare data?</h2>
+                                        <div class="flex justify-center space-x-2">
+                                            <button id="PrepareDataButton" type="button" class="prepare_popup_button bg-blue-600 text-white py-3 rounded hover:bg-blue-400">Prepare</button>
+                                            <button id="closePopup" type="button" class="prepare_popup_button bg-gray-500 text-white py-3 rounded hover:bg-red-600">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="container mx-auto">
+                                    <hr class="border-t border-blue-600 mx-12 mb-3">
+                                </div>
+
+                                <div id="sections-container" class="flex gap-6">
+                                    <!-- First Section -->
+                                    <div id="walmart-section" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                        <h2 class="text-xl font-bold text-gray-800 text-center">Walmart</h2>
+                                        <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Walmart. You can get only Walmart related data. </p>
+                                        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" onclick="openWalmart()">
+                                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M10 7v6m-3-3h6m4 0a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Second Section -->
+                                    <div id="cac-section" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                        <h2 class="text-xl font-bold text-gray-800 text-center">Business Catalyst</h2>
+                                        <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Business Catalyst. You can get only Business Catalyst related data.</p>
+                                        <div class="flex gap-4 mt-3">
+                                            <button  data-id="1" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                    <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                    <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                </svg>
+                                            </button>
+                                            <!--<button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
+                                                </svg>
+                                            </button>-->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- outer end -->
+                                <!-- inner start -->
+
+                                <!-- Container for New Sections -->
+                                <!-- this is the walmart section -->
+                                <div id="new-sections-container" class="hidden flex flex-col gap-6 mt-5">
+                                    <div id="horizontal-sections" class="flex gap-6">
+                                        <!-- First Section -->
+                                        <div id="walmart-section-part1" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Walmart Vriddhi </h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Walmart Vriddhi which is part of Walmart. You can get only Walmart Vriddhi related data.</p>
+                                            <div class="flex gap-4 mt-3">
+                                                <!--
+                                                <button data-id="2" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>-->
+                                                <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" onclick="openWalmartVriddhi()">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M10 7v6m-3-3h6m4 0a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                                                    </svg>
+                                                </button>
+                                                <!--
+                                                <button id="prepareData" class="prepare_database bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M8.737 8.737a21.49 21.49 0 0 1 3.308-2.724m0 0c3.063-2.026 5.99-2.641 7.331-1.3 1.827 1.828.026 6.591-4.023 10.64-4.049 4.049-8.812 5.85-10.64 4.023-1.33-1.33-.736-4.218 1.249-7.253m6.083-6.11c-3.063-2.026-5.99-2.641-7.331-1.3-1.827 1.828-.026 6.591 4.023 10.64m3.308-9.34a21.497 21.497 0 0 1 3.308 2.724m2.775 3.386c1.985 3.035 2.579 5.923 1.248 7.253-1.336 1.337-4.245.732-7.295-1.275M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/>
+                                                    </svg>
+
+                                                </button>
+                                                <button class="download_database bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
+                                                    </svg>
+
+                                                </button>
+                                                -->
+
+                                                <!--<button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
+                                                    </svg>
+                                                </button>-->
+                                            </div>
+                                        </div>
+
+                                        <!-- Second Section -->
+                                        <div id="walmart-section-part2" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Walmart Market Place</h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Walmart Market Place which is part of Walmart. You can get only Walmart Market Place related data.</p>
+                                            <div class="flex gap-4 mt-3">
+
+                                                <!--
+                                                <button data-id="3" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>
+                                                -->
+                                                <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" onclick="openWalmartMarket()">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M10 7v6m-3-3h6m4 0a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                                                    </svg>
+                                                </button>
+
+                                                <!--<button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
+                                                    </svg>
+                                                </button>-->
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Buttons Container -->
+                                    <div class="flex gap-4 mt-5">
+                                        <!-- Prev Button -->
+                                        <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500" onclick="goBack()">
+                                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- inner end -->
+
+                                </div>
+
+                                <!--start walmart vriddhi section -->
+                                <div id="walmart-vriddhi-new-sections-container" class="hidden flex flex-col gap-6 mt-5">
+                                    <div id="walmart-vriddhi-horizontal-sections" class="flex gap-6">
+                                        <!-- First Section -->
+                                        <div id="walmart-vriddhi-section-part1" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Website</h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Website data which is part of Walmart Vriddhi data. You can get only website data for Walmart Vriddhi.</p>
+                                            <div class="flex gap-4 mt-3">
+                                                <button data-id="2" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Second Section -->
+                                        <div id="walmart-vriddhi-section-part2" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Paid</h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Paid data which is part of Walmart Vriddhi data and includes Facebook, Instagram etc. data. You can get Paid data for Walmart Vriddhi.</p>
+                                            <div class="flex gap-4 mt-3">
+                                                <button data-id="3" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Buttons Container -->
+                                    <div class="flex gap-4 mt-5">
+                                        <!-- Prev Button -->
+                                        <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500" onclick="goBackVriddhi()">
+                                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                </div>
+                                <!-- end walmart vriddhi section -->
+                                <!-- start walmart market section -->
+                                <!--start walmart vriddhi section -->
+                                <div id="walmart-market-new-sections-container" class="hidden flex flex-col gap-6 mt-5">
+                                    <div id="walmart-market-horizontal-sections" class="flex gap-6">
+                                        <!-- First Section -->
+                                        <div id="walmart-market-section-part1" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Website</h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Website data which is part of Walmart Market Place data. You can get only website data for Walmart Market Place.</p>
+                                            <div class="flex gap-4 mt-3">
+                                                <button data-id="4" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Second Section -->
+                                        <div id="walmart-market-section-part2" class="flex-1 bg-white rounded-lg shadow-md p-6 flex flex-col items-center py-3">
+                                            <h2 class="text-xl font-bold text-gray-800 text-center">Paid</h2>
+                                            <p class="mt-2 text-gray-600 px-4 text-left w-full">This section belongs to Paid data which is part of Walmart Market Place data and includes Facebook, Instagram etc data. You can get only Paid data for Walmart Market Place.</p>
+                                            <div class="flex gap-4 mt-3">
+                                                <button data-id="5" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 showButton">
+                                                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                      <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                                                      <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                    </svg>
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Buttons Container -->
+                                    <div class="flex gap-4 mt-5">
+                                        <!-- Prev Button -->
+                                        <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500" onclick="goBackMarket()">
+                                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                </div>
+                                <!-- end walmart market section -->
+                                    <!-- Data Table Section -->
+                                    <div id="dataTableSection" class="hidden">
+                                        <div class="w-full mt-6 ">
+                                            <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                            <div class="flex justify-between mb-4 px-4">
+                                                <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                            </div>
+                                        </div>
+                                        <!-- Data Table Container -->
+                                        <div id="dataTableContainer" class="w-full px-4"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Main Content End -->
+
+            </div>
+        </div>
+        <!-- End of project -->
+
+        <!-- Modal -->
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3><b>Status Logs</b></h3>
+                <hr>
+                <div id="modalMessage"></div>
+            </div>
+        </div>
+        <!-- Loader -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    {% include "partials/scripts.html" %}
+
+    <script>
+        /*
+        document.addEventListener("DOMContentLoaded", function() {
+            var loader = document.getElementById("loader");
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+
+            function openModal(messages) {
+                var messageHtml = messages.join('<br>');
+                document.getElementById("modalMessage").innerHTML = messageHtml;
+                modal.style.display = "block";
+            }
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+
+            function performLoaderOperation() {
+                showLoader(); // Show loader
+
+                // Make an AJAX request to the Flask backend
+                fetch('/prepareDatabaseData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    hideLoader(); // Hide loader after operation completion
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    hideLoader(); // Hide loader even if there's an error
+                    var messages = [
+                                "Error logs: There is a problem in Database connection!",
+                            ];
+                    openModal(messages);
+                });
+            }
+
+            document.getElementById("prepareData").onclick = performLoaderOperation;
+        });
+
+         */
+    </script>
+    <script>
+document.getElementById('openPopup').addEventListener('click', function() {
+    fetch('/getDatabaseCollection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})  // If you need to send data, include it here
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Show the result in the popup
+            document.getElementById('resultMessage').textContent = data.result;
+            showPopup();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    // Function to show the popup
+    function showPopup() {
+        document.getElementById('popup').style.display = 'flex';
+    }
+
+    // Function to hide the popup
+    document.getElementById('closePopup').addEventListener('click', function() {
+        document.getElementById('popup').style.display = 'none';
+    });
+
+    // Show the popup when needed (e.g., when a specific button is clicked)
+</script>
+    <script>
+        // JavaScript to handle popup visibility
+        document.getElementById('openPopup').onclick = function() {
+            document.getElementById('popup').style.display = 'flex';
+        };
+
+        document.getElementById('closePopup').onclick = function() {
+            document.getElementById('popup').style.display = 'none';
+        };
+    </script>
+
+    <script>
+        function openWalmart() {
+            // Remove the existing sections
+            document.getElementById('sections-container').classList.add('hidden');
+
+            // Create and append new sections
+            const newSectionsContainer = document.getElementById('new-sections-container');
+            newSectionsContainer.classList.remove('hidden');
+        }
+        function openWalmartVriddhi() {
+            // Remove the existing sections
+            document.getElementById('new-sections-container').classList.add('hidden');
+
+            // Create and append new sections
+            const newSectionsContainer = document.getElementById('walmart-vriddhi-new-sections-container');
+            newSectionsContainer.classList.remove('hidden');
+        }
+        function openWalmartMarket() {
+            // Remove the existing sections
+            document.getElementById('new-sections-container').classList.add('hidden');
+
+            // Create and append new sections
+            const newSectionsContainer = document.getElementById('walmart-market-new-sections-container');
+            newSectionsContainer.classList.remove('hidden');
+        }
+
+        function openCAC() {
+            // Hide new sections and restore original sections
+            document.getElementById('new-sections-container').classList.add('hidden');
+            document.getElementById('sections-container').classList.remove('hidden');
+            document.getElementById('walmart-section').classList.remove('hidden');
+            document.getElementById('cac-section').classList.remove('hidden');
+        }
+
+        function goBack() {
+            // Hide new sections and restore original sections
+            document.getElementById('new-sections-container').classList.add('hidden');
+            document.getElementById('sections-container').classList.remove('hidden');
+        }
+        function goBackVriddhi() {
+            // Hide new sections and restore original sections
+            document.getElementById('new-sections-container').classList.remove('hidden');
+            document.getElementById('walmart-vriddhi-new-sections-container').classList.add('hidden');
+        }
+        function goBackMarket() {
+            // Hide new sections and restore original sections
+            document.getElementById('new-sections-container').classList.remove('hidden');
+            document.getElementById('walmart-market-new-sections-container').classList.add('hidden');
+        }
+    </script>
+
+    <script>
+    // Function to show the loader
+    var loader = document.getElementById("loader");
+    var modal = document.getElementById("myModal");
+    var span = document.getElementsByClassName("close")[0];
+
+    function openModal(messages) {
+        var messageHtml = messages.join('<br>');
+        document.getElementById("modalMessage").innerHTML = messageHtml;
+        modal.style.display = "block";
+    }
+    function showLoader() {
+        document.getElementById('loader').style.display = 'flex';
+    }
+
+    // Function to hide the loader
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+/*
+    document.querySelectorAll('.showButton').forEach(button => {
+        button.addEventListener('click', function() {
+            const dataTableSection = document.getElementById('dataTableSection');
+
+            // Check if the data table section is currently hidden or visible
+            if (dataTableSection.style.display === 'none' || dataTableSection.style.display === '') {
+                showLoader();
+                // Fetch data and show the table
+                const buttonId = this.getAttribute('data-id');
+                fetch(`/showDatabase?id=${buttonId}`, { // Pass the button ID as a query parameter if needed
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const dataTableContainer = document.getElementById('dataTableContainer');
+                    dataTableContainer.innerHTML = data.data_table;
+                    $('#dataTableContainer table').DataTable({
+                        "pagingType": "full_numbers",
+                        "pageLength": 5,
+                        "lengthMenu": [5, 10, 25, 50, 100] // Add 5 to the dropdown options
+                    });
+                    // Show the data table section
+                    dataTableSection.style.display = 'block';
+                    hideLoader();
+
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    hideLoader(); // Hide the loader in case of an error
+                    var messages = [
+                                "Error logs: There is a problem in Database connection!",
+                            ];
+                    openModal(messages);
+                });
+            } else {
+                // Hide the data table section
+                dataTableSection.style.display = 'none';
+            }
+        });
+    });
+
+ */
+    document.querySelectorAll('.showButton').forEach(button => {
+    button.addEventListener('click', function() {
+        const dataTableSection = document.getElementById('dataTableSection');
+
+        // Check if the data table section is currently hidden or visible
+        if (dataTableSection.style.display === 'none' || dataTableSection.style.display === '') {
+            showLoader();
+            // Fetch data and show the table
+            const buttonId = this.getAttribute('data-id');
+            fetch(`/showDatabase?id=${buttonId}`, { // Pass the button ID as a query parameter if needed
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // If the response is not ok, throw an error
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Error fetching data');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === "success") {
+                    const dataTableContainer = document.getElementById('dataTableContainer');
+                    dataTableContainer.innerHTML = data.data_table;
+                    $('#dataTableContainer table').DataTable({
+                        "pagingType": "full_numbers",
+                        "pageLength": 5,
+                        "lengthMenu": [5, 10, 25, 50, 100,500,1000] // Add 7 to the dropdown options
+                    });
+                    // Show the data table section
+                    dataTableSection.style.display = 'block';
+                    hideLoader();
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                hideLoader(); // Hide the loader in case of an error
+                var messages = [
+                    error.message // Add the actual error message
+                ];
+                openModal(messages);
+            });
+        } else {
+            // Hide the data table section
+            dataTableSection.style.display = 'none';
+        }
+    });
+});
+
+
+    document.getElementById('downloadCsv').addEventListener('click', function() {
+        window.location.href = '/download/csv';
+    });
+
+    document.getElementById('downloadXlsx').addEventListener('click', function() {
+        window.location.href = '/download/xlsx';
+    });
+
+    $(document).ready(function() {
+        $('#dataTableContainer table').DataTable({
+            "pagingType": "full_numbers",
+            "pageLength": 5,
+            "lengthMenu": [5, 10, 25, 50, 100], // Add 5 to the dropdown options
+            "drawCallback": function(settings) {
+                $('#dataTableContainer table thead th').css('text-align', 'left');
+                $('#dataTableContainer table tbody td').css('text-align', 'left');
+            }
+        });
+    });
+</script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var loader = document.getElementById("loader");
+
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            function performLoaderOperation() {
+                //new added
+                const inputField1Value = document.getElementById('inputField1').value;
+                const inputField2Value = document.getElementById('inputField2').value;
+                const columnName = document.getElementById('columnNameInputField').value;
+                const data = {
+                        columnName: columnName,
+                        field1: inputField1Value,
+                        field2: inputField2Value
+                    };
+
+                //new added end
+                showLoader(); // Show loader
+
+                fetch('/prepareDatabaseData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => {
+
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                //console.error("Error Data:", data);
+                                throw new Error(data.message || 'Unknown error');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        //console.log("Response Data:", data);
+
+                        if (data.status === "success") {
+                            //console.log('Success:', data);
+                            var messages = ["Data prepared Successfully!","Press download button to download the database file."];
+                        openModal(messages); // Ensure this function is defined
+                        } else {
+                            throw new Error(data.message);
+                        }
+
+                        hideLoader(); // Hide loader after operation completion
+                    })
+                    .catch((error) => {
+                        //console.error('Error:', error);
+                        hideLoader(); // Hide loader even if there's an error
+
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+                    });
+            }
+
+            //document.getElementById("prepareData").onclick = performLoaderOperation; //PrepareDataButton
+            document.getElementById("PrepareDataButton").onclick = performLoaderOperation; //PrepareDataButton
+        });
+
+
+</script>
+<script>
+document.querySelectorAll('.download_database').forEach(button => {
+    button.addEventListener('click', function() {
+        // Create a temporary form to handle the download
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/downloadDatabaseData';
+
+        // Append form to the body and submit
+        document.body.appendChild(form);
+        form.submit();
+
+        // Clean up: remove the form
+        document.body.removeChild(form);
+    });
+});
+</script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+
+
+</body>
+</html>
+

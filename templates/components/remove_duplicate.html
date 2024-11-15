@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include 'partials/head.html' %}
+    <title>Data Preprocessing</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        /* Custom CSS to ensure dropdown arrow visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px; /* Space for the arrow */
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px; /* Adjust size of the arrow */
+        }
+
+        /* new added */
+        #dataTableSection {
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+    </style>
+    <style>
+        /* Custom Dropdown */
+        .select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 80px;
+            overflow-y: auto;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 10;
+        }
+
+        .dropdown-options ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown-options li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options li:hover {
+            background-color: #f0f0f0;
+        }
+
+        .selected-option {
+            cursor: pointer;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            color: black;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 3rem;
+            resize: none;
+            width: 100%;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            margin-left: 1rem;
+            margin-right: 1rem;
+        }
+
+        .form-row > div {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .button-container a,
+        .button-container button {
+            flex: 1;
+            max-width: 150px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .button-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-container a,
+            .button-container button {
+                max-width: none;
+                margin-bottom: 1rem;
+            }
+
+            .button-container a:last-child,
+            .button-container button:last-child {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+    <style>
+
+        /* Modal styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* On top of other elements */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%; /* Adjusted width to one-third of the current size */
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>--> <!-- new added -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+</head>
+
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <div class="w-full page-wrapper xl:px-6 px-0">
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <div class="card mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-chart-pie ps-2 text-4xl"></i>Remove Duplicates</h6>
+                                <div class="card">
+                                    <section class="flex flex-col pt-6">
+                                        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="removeDuplicateData" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST" action="/removeDuplicateData">
+                                                    <!-- First row -->
+                                                    <div class="form-row">
+                                                        <div class="select-container">
+                                                            <label for="dropdown1" class="block text-gray-700 font-bold mb-1">Select columns for database</label>
+                                                            <div class="relative">
+                                                                <div class="dropdown-options" id="dropdown1-options">
+                                                                    <ul>
+
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown1', 'textarea1')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                        <li onclick="selectOption('All', 'dropdown1', 'textarea1')">All</li>
+                                                                        <li onclick="selectOption('None', 'dropdown1', 'textarea1')">None</li>
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown1"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown1-options')"
+                                                                    onblur="hideDropdown('dropdown1-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex flex-col">
+                                                            <label for="textarea1" class="block text-gray-700 font-bold mb-1">Database fields</label>
+                                                            <textarea
+                                                                id="textarea1"
+                                                                name="textarea1"
+                                                                class="block p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                                placeholder="Selected options will appear here..."
+                                                            ></textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Second row -->
+                                                    <div class="form-row">
+                                                        <div class="select-container">
+                                                            <label for="dropdown2" class="block text-gray-700 font-bold mb-1">Select columns for duplicate removal</label>
+                                                            <div class="relative">
+                                                                <div class="dropdown-options" id="dropdown2-options">
+                                                                    <ul>
+
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown2', 'textarea2')">{{ column }}</li>
+                                                                        {% endfor %}
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown2"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown2-options')"
+                                                                    onblur="hideDropdown('dropdown2-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex flex-col">
+                                                            <label for="textarea2" class="block text-gray-700 font-bold mb-1">Columns to remove duplicates</label>
+                                                            <textarea
+                                                                id="textarea2"
+                                                                name="textarea2"
+                                                                class="block p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                                placeholder="Selected options will appear here..."
+                                                            ></textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Third row -->
+                                                    <div class="form-row">
+                                                        <div class="select-container">
+                                                            <label for="dropdown3" class="block text-gray-700 font-bold mb-1">Select method for duplicate removal</label>
+                                                            <div class="relative">
+                                                                <div class="dropdown-options" id="dropdown3-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('OR', 'dropdown3', 'textarea3')">OR</li>
+                                                                        <li onclick="selectOption('AND', 'dropdown3', 'textarea3')">AND</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown3"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown3-options')"
+                                                                    onblur="hideDropdown('dropdown3-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex flex-col">
+                                                            <label for="textarea3" class="block text-gray-700 font-bold mb-1">Operations on columns</label>
+                                                            <textarea
+                                                                id="textarea3"
+                                                                name="textarea3"
+                                                                class="block p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                                placeholder="Selected options will appear here..."
+                                                            ></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Buttons -->
+                                                    <div class="button-container mt-4 mb-4">
+                                                        <a href="{{ url_for('dataPreprocessing') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-2 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Prev</a>
+                                                        <button id="duplicateRemoval" type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-2 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Remove dupl.</button>
+                                                        <button type="button" id="showButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <!--<a href="{{ url_for('save_in_DB') }}" id="saveInDB" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-2 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Save in DB</a>-->
+                                                        <button type="button" id="DBSaveButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Save in DB</button>
+                                                        <a href="{{ url_for('exportData') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-2 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Next</a>
+                                                    </div>
+                                                </form>
+                                                <!-- Data Table and Download Buttons -->
+                                                <div class="w-full mt-6">
+                                                    <!-- Initially hidden elements -->
+                                                    <div id="dataTableSection" class="hidden">
+                                                        <!-- Table Name -->
+                                                        <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                                        <div class="flex justify-between mb-4 px-4">
+                                                            <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                            <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                                        </div>
+                                                        <!-- Data Table Container -->
+                                                        <div id="dataTableContainer" class="w-full px-4"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+            </div>
+        </div>
+        <!-- Modal -->
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3><b>Status Logs</b></h3>
+                <hr>
+                <div id="modalMessage"></div>
+            </div>
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var loader = document.getElementById("loader");
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+
+            function openModal(messages) {
+                var messageHtml = messages.join('<br>');
+                document.getElementById("modalMessage").innerHTML = messageHtml;
+                modal.style.display = "block";
+            }
+
+            /*
+            function performOperation() {
+                loader.style.display = "flex"; // Show loader
+                const form = document.getElementById('removeDuplicateData');
+                const formData = new FormData(form);
+                // Create an object from FormData
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+
+                fetch('/removeDuplicateData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        loader.style.display = "none"; // Hide loader
+                        if (data.status === 'success') {
+                            var messages = [
+                                "Unique data count: " + data.unique_data,
+                                "Duplicate data count: " + data.duplicate_data
+                            ];
+                            openModal(messages);
+                        } else {
+                            //alert(data.message)
+                            openModal([data.message]);
+                        }
+                    })
+                    .catch(error => {
+                        loader.style.display = "none"; // Hide loader on error
+                        openModal(["Error occurred: " + error.message]);
+                    });
+            }*/
+            function performOperation() {
+                loader.style.display = "flex"; // Show loader
+                const form = document.getElementById('removeDuplicateData');
+                const formData = new FormData(form);
+
+                // Create an object from FormData
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+
+                fetch('/removeDuplicateData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const taskId = data.task_id;
+
+                        // Poll for task completion
+                        const pollTask = setInterval(() => {
+                            fetch(`/check_task_status_remove_duplicate/${taskId}`)
+                                .then(response => response.json())
+                                .then(taskData => {
+                                    if (taskData.status === 'Completed') {
+                                        clearInterval(pollTask);
+                                        loader.style.display = "none"; // Hide loader when task is complete
+                                        var messages = [
+                                            "Unique data count: " + taskData.unique_data,
+                                            "Duplicate data count: " + taskData.duplicate_data
+                                        ];
+                                        openModal(messages);
+                                    } else if (taskData.status.startsWith('Error')) {
+                                        clearInterval(pollTask);
+                                        loader.style.display = "none"; // Hide loader on error
+                                        openModal([taskData.status]);
+                                    }
+                                })
+                                .catch(error => {
+                                    clearInterval(pollTask);
+                                    loader.style.display = "none"; // Hide loader on error
+                                    openModal(["Error occurred: " + error.message]);
+                                });
+                        }, 2000); // Poll every 2 seconds
+                    } else {
+                        loader.style.display = "none"; // Hide loader if initial response is error
+                        openModal([data.message]);
+                    }
+                })
+                .catch(error => {
+                    loader.style.display = "none"; // Hide loader on error
+                    openModal(["Error occurred: " + error.message]);
+                });
+        }
+
+
+            // Example button to trigger the operation
+            document.getElementById("duplicateRemoval").addEventListener("click", function (event) {
+                event.preventDefault(); // Prevent form submission
+                performOperation();
+            });
+
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        });
+    </script>
+    <!-- this is for only loader -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var loader = document.getElementById("loader");
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+            function openModal(messages) {
+                var messageHtml = messages.join('<br>');
+                document.getElementById("modalMessage").innerHTML = messageHtml;
+                modal.style.display = "block";
+            }
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+            /*
+            function performLoaderOperation() {
+                showLoader(); // Show loader
+
+                // Make an AJAX request to the Flask backend
+                fetch('/save_in_DB', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                        //console.log("Response Status:", response.status);
+                        //console.log("Response OK:", response.ok);
+
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error("Error Data:", data);
+                                throw new Error(data.message || 'Unknown error');
+                            });
+                        }
+                        return response.json();
+                    })
+                .then(data => {
+                    //console.log("Response Data:", data);
+
+                        if (data.status === "success") {
+                            //console.log('Success:', data);
+                            var messages = ["Operation Successfully done!"];
+                            openModal(messages);
+                        } else {
+                            throw new Error(data.message);
+                        }
+
+                        hideLoader(); // Hide loader after operation completion
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                        hideLoader(); // Hide loader even if there's an error
+
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+                });
+            }*/
+
+            function performLoaderOperation() {
+    showLoader(); // Show loader
+
+    // Make an AJAX request to initiate the operation
+    fetch('/save_in_DB', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Unknown error occurred while starting the operation.');
+            });
+        }
+        return response.json(); // Expecting { status: "success", task_id: "task_123" }
+    })
+    .then(data => {
+        if (data.status === "success" && data.task_id) {
+            // Task started successfully, now poll for task completion
+            pollTaskStatus(data.task_id);
+        } else {
+            throw new Error("Failed to start the operation.");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+        hideLoader(); // Hide loader even if there's an error
+        openModal([error.message]); // Show error message in modal
+    });
+    }
+
+    // Function to poll the task status until it is completed
+    function pollTaskStatus(taskId) {
+        const pollInterval = 2000; // Poll every 2 seconds
+
+        function checkTask() {
+            fetch(`/task_status_save_DB/${taskId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Unknown error occurred while polling task status.');
+                    });
+                }
+                return response.json(); // Expecting { status: "Completed" | "Processing" | "Error" }
+            })
+            .then(data => {
+                if (data.status === "Completed") {
+                    hideLoader(); // Hide loader after successful operation
+                    openModal(["Operation successfully completed!"]);
+                } else if (data.status === "Error") {
+                    hideLoader(); // Hide loader on error
+                    openModal([`${data.message}`]);
+                } else {
+                    // Still processing, continue polling
+                    setTimeout(checkTask, pollInterval);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error.message);
+                hideLoader(); // Hide loader on error
+                openModal([error.message]);
+            });
+        }
+
+        // Start polling for the task status
+        checkTask();
+    }
+
+
+
+            document.getElementById("DBSaveButton").onclick = performLoaderOperation;
+        });
+    </script>
+
+    <script>
+        function showDropdown(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideDropdown(id) {
+            setTimeout(() => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            }, 200);
+        }
+
+
+        function selectOption(option, dropdownId, textareaId) {
+            const dropdownInput = document.getElementById(dropdownId);
+            const textarea = document.getElementById(textareaId);
+            const currentText = textarea.value.split(', ').map(s => s.trim());
+
+            // Update the input field value
+            dropdownInput.value = option;
+
+
+            // Append the selected option to the textarea
+            if (!currentText.includes(option)) {
+                if (textarea.value) {
+                    if (option==="All"){
+                        var columnList = {{ column_headings | tojson }};
+                        var joinedString = columnList.join(", ");
+                        textarea.value = joinedString
+                    } else if (option==="None") {
+                        textarea.value=""
+                    }
+                    else {
+                        textarea.value += `, ${option}`;
+                    }
+                } else {
+                    if (option==="All"){
+                        var columnList = {{ column_headings | tojson }};
+                        var joinedString = columnList.join(", ");
+                        textarea.value = joinedString
+                    } else if (option==="None") {
+                        textarea.value=""
+                    }
+                    else {
+                        textarea.value = option;
+                    }
+                }
+            }
+
+            hideDropdown(`${dropdownId}-options`);
+        }
+
+        document.addEventListener('click', function (event) {
+            const isClickInside = event.target.closest('.select-container');
+            if (!isClickInside) {
+                document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        function showLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "flex";
+            }
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "none";
+            }
+        }
+
+        $(document).ready(function() {
+            const showButton = document.getElementById('showButton');
+            const dataTableSection = document.getElementById('dataTableSection');
+            const dataTableContainer = document.getElementById('dataTableContainer');
+
+            let isTableVisible = false; // Track visibility state
+
+            showButton.addEventListener('click', function() {
+                showLoader()
+                if (isTableVisible) {
+                    dataTableSection.classList.add('hidden');
+                    showButton.textContent = 'Show';
+                    isTableVisible = false;
+                    hideLoader()
+                } else {
+                    fetch('/removeShowdata')
+                        .then(response => response.json())
+                        .then(data => {
+
+                            if (data.len_is_zero) {
+                                hideLoader(); // Hide loader
+                                setTimeout(function() {
+                                    alert("No data available to display!"); // Show alert for empty data
+                                }, 100); // Delay of 100 milliseconds
+                                return; // Stop further execution if no data
+                            }
+
+                            dataTableContainer.innerHTML = data.data_table;
+                            $('#dataTableContainer table').DataTable({
+                                "pagingType": "full_numbers",
+                                "pageLength": 5,
+                                "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                            });
+                            dataTableSection.classList.remove('hidden');
+                            showButton.textContent = 'Hide';
+                            isTableVisible = true;
+                            hideLoader()
+                        });
+                }
+            });
+
+            /*
+            document.getElementById('downloadCsv').addEventListener('click', function() {
+                window.location.href = '/download/csv';
+            });
+
+            document.getElementById('downloadXlsx').addEventListener('click', function() {
+                window.location.href = '/download/xlsx';
+            });
+
+             */
+            //start new code added
+            //start
+        document.getElementById('downloadCsv').addEventListener('click', function() {
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to CSV format
+            const csvData = convertToCSV(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        document.getElementById('downloadXlsx').addEventListener('click', function() {
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to XLSX format
+            const xlsxData = convertToXLSX(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([xlsxData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Function to convert data to CSV format
+        function convertToCSV(headers, data) {
+            // Combine headers with data
+            const rows = [headers, ...data.map(row => Object.values(row))];
+            return rows.map(row => row.join(',')).join('\n');
+        }
+
+        // Function to convert data to XLSX format (using XLSX.js library)
+        function convertToXLSX(headers, data) {
+            const workbook = XLSX.utils.book_new();
+
+            // Combine headers with data
+            const jsonData = data.map((row, index) => {
+                const rowData = {};
+                headers.forEach((header, i) => {
+                    rowData[header] = row[i];
+                });
+                return rowData;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(jsonData, { header: headers });
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+            const xlsxData = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+            return new Uint8Array(xlsxData.split("").map(char => char.charCodeAt(0)));
+        }
+        //end
+            //end new code added
+        });
+    </script>
+<!--
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchColumns();  // Fetch columns when the page loads
+    });
+
+    function fetchColumns() {
+        fetch('/get_columns')
+        .then(response => response.json())
+        .then(data => {
+            // Update all dropdowns dynamically
+            document.querySelectorAll('.dropdown-options-list').forEach(dropdownList => {
+                const dropdownId = dropdownList.getAttribute('data-dropdown');
+                const textareaId = dropdownList.getAttribute('data-textarea');
+                dropdownList.innerHTML = ''; // Clear existing options
+
+                data.forEach(column => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = column;
+                    listItem.onclick = function() {
+                        selectOption(column, dropdownId, textareaId);
+                    };
+                    dropdownList.appendChild(listItem);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching columns:', error));
+    }
+</script>
+-->
+
+</body>
+
+</html>

@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'partials/head.html' %}
+    <title>Export Data</title>
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        /* Custom CSS for dropdown visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px; /* Space for the arrow */
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px; /* Adjust size of the arrow */
+        }
+
+        .select-container {
+            position: relative;
+            flex: 1; /* Allow the container to grow and fill available space */
+            min-width: 400px; /* Ensure minimum width */
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%; /* Match the width of the input */
+            max-height: 80px; /* Adjust to show options comfortably */
+            overflow-y: auto; /* Scroll if there are more options */
+            background-color: white; /* White background */
+            color: black; /* Black text */
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none; /* Hidden by default */
+            z-index: 10; /* Ensure it appears above other elements */
+        }
+
+        .dropdown-options ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown-options li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options li:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+
+        .selected-option {
+            cursor: pointer;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px; /* Make the border rounded */
+            background-color: white; /* White background for the input */
+            color: black; /* Black text for the input */
+            width: 100%; /* Ensure the input takes full width of container */
+            box-sizing: border-box; /* Ensure padding and border are included in width */
+        }
+
+        /* DataTable styles */
+        #dataTableSection {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+        /* new added */
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            display: none;
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+
+
+    </style>
+    <style>
+        /* Modal styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* On top of other elements */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%; /* Adjusted width to one-third of the current size */
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <style>
+        .length_check{
+            padding-left: 50px;
+            padding-right: 50px;
+        }
+        .shift_right1{
+            margin-left: 30px;
+        }
+        .shift_right2{
+            margin-left: 10px;
+        }
+        .shift_right3{
+            margin-left: 40px;
+        }
+        #dropdown3{
+            width: 250px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script> <!-- new added -->
+
+</head>
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <!-- Sidebar and other layout elements -->
+            <div class="w-full page-wrapper xl:px-6 px-0">
+
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <div class="card mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-download ps-2 text-4xl"></i>Export Data</h6>
+                                <div class="card">
+                                    <section class="flex flex-col items-center pt-6">
+                                        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 py-3">
+                                                <form id="dataForm" class="space-y-4 md:space-y-6 flex flex-col items-center mx-2 md:mx-8 lg:mx-16" method="POST" action="/export_download">
+                                                    <!-- Row for File Type Input and File Name Input -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown1" class="block text-gray-700 font-bold mb-1">Select file type</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown1-options">
+                                                                    <ul>
+                                                                        <li onclick="selectFileType('Unique data')">Unique data</li>
+                                                                        <li onclick="selectFileType('Duplicate data')">Duplicate data</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown1"
+                                                                    name="file_type"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown1-options')"
+                                                                    onblur="hideDropdown('dropdown1-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <!-- File Name Input -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown2" class="block text-gray-700 font-bold mb-1">Select file name</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown2-options">
+                                                                    <ul id="file-options">
+                                                                        <!-- Options will be populated here -->
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown2"
+                                                                    name="file_name"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown2-options')"
+                                                                    onblur="hideDropdown('dropdown2-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Row for Buttons -->
+                                                    <!--
+                                                    <div class="flex flex-wrap justify-center gap-4 mt-4 mb-4 w-full max-w-md py-3 button-row">
+                                                        <a href="{{ url_for('removeDuplicate') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex items-center justify-center">Prev</a>
+                                                        <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Download</button>
+                                                        <button type="button" id="showButton" onclick="toggleDataTable()" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <button type="button" id="editDataButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Edit data</button>
+                                                        <button type="button" id="deleteButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Remove</button>
+                                                    </div>
+                                                    -->
+                                                    <div class="flex justify-center gap-4 mt-4 mb-4 w-full max-w-md py-3 button-row">
+                                                        <a href="{{ url_for('removeDuplicate') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0 flex items-center justify-center">Prev</a>
+                                                        <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Download</button>
+                                                        <button type="button" id="showButton" onclick="toggleDataTable()" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <button type="button" id="editDataButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" onclick="showEditPage()">Edit</button>
+
+                                                        <button type="button" id="deleteButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Remove</button>
+                                                    </div>
+
+                                                    <div id="new-sections-container" class="hidden w-full">
+
+                                                        <div class=" w-full flex flex-col justify-center content-center">
+
+                                                        <div class="container mx-auto w-full">
+                                                            <hr class="border-t border-blue-600 mx-12 mb-3">
+                                                        </div>
+                                                        </div>
+
+                                                        <div class="flex justify-center">
+                                                            <div class="bg-gray-50 p-4">
+                                                                <form class="space-y-4 md:space-y-6 flex flex-col items-center px-4">
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <label class="mr-4 text-gray-700 text-xl font-bold ">Filter records base on column</label>
+                                                                    </div>
+
+                                                                    <!--start add selected column -->
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check0" class="mr-4">
+                                                                        <label for="check0" class="mr-4 text-gray-700 font-bold">Use file for update the column value</label>
+                                                                    </div>
+
+                                                                    <div class="flex items-start">
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <label class="mr-4 text-gray-700 font-bold text-lg">Select column</label>
+                                                                                <div class="select-container flex flex-col w-full max-w-md mr-4">
+                                                                                    <div class="relative">
+                                                                                        <!-- Custom Dropdown -->
+                                                                                        <div class="dropdown-options" id="source_type_handle-options">
+                                                                                            <ul id="dropdown-options-list">
+
+                                                                                                <!--
+                                                                                                <li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('Website')">Website</li>
+                                                                                                <li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('Paid')">Paid</li>
+                                                                                                <li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('None')">None</li>
+                                                                                                -->
+                                                                                            </ul>
+                                                                                        </div>
+                                                                                        <input id="column_name_handle" name="source_type_handle" class="selected-option bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onfocus="showDropdown('source_type_handle-options')" onblur="hideDropdown('source_type_handle-options')" readonly/>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <button id="refreshButton" type="button" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-300">
+                                                                                    <i class="fas fa-sync-alt mr-2"></i>
+                                                                                    Refresh
+                                                                                </button>
+                                                                            </div>
+                                                                    </div>
+                                                                    <!-- end add selected column -->
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check1" class="mr-4">
+                                                                        <label for="check1" class="mr-4 text-gray-700 font-bold">Vowel checking</label>
+                                                                    </div>
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check2" class="mr-4">
+                                                                        <label for="check2" class="mr-4 text-gray-700 font-bold">Palindrome checking</label>
+                                                                    </div>
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check3" class="mr-4">
+                                                                        <label for="check3" class="mr-4 text-gray-700 font-bold">White space checking</label>
+                                                                    </div>
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check4" class="mr-4">
+                                                                        <label for="check4" class="mr-4 text-gray-700 font-bold">Case sensitive checking</label>
+                                                                    </div>
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check5" class="mr-4">
+                                                                        <label for="check5" class="mr-4 text-gray-700 font-bold">Custom value checking</label>
+                                                                        <div class="flex flex-col shift_right1">
+                                                                              <label for="customTextarea" class="mb-1 text-gray-700 font-bold text-sm">Prohibited elements</label>
+                                                                              <textarea id="customTextarea" class="resize-none px-4 py-2 border border-gray-300 rounded-md mr-4 transition-all duration-300" ></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check6" class="mr-4">
+                                                                        <label for="check6" class="mr-4 text-gray-700 font-bold">Numerical chars checking</label>
+                                                                        <div class="flex flex-col shift_right2">
+                                                                              <label for="input61" class="mb-1 text-gray-700 font-bold text-sm">Min no. of numerical chars </label>
+                                                                              <input type="text" id="input61" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="1">
+                                                                        </div>
+
+                                                                    </div>
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check7" class="mr-4">
+                                                                        <label for="check7" class="mr-4 text-gray-700 font-bold">Special chars checking</label>
+                                                                        <div class="flex flex-col ml-5 shift_right1">
+                                                                              <label for="input71" class="mb-1 text-gray-700 font-bold text-sm">From special chars count</label>
+                                                                              <input type="text" id="input71" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="2">
+                                                                        </div>
+                                                                        <div class="flex flex-col ml-5">
+                                                                              <label for="input72" class="mb-1 text-gray-700 font-bold text-sm">To special chars count</label>
+                                                                              <input type="text" id="input72" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="10">
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check8" class="mr-4">
+                                                                        <label for="check8" class="mr-4 text-gray-700 font-bold">Repeated chars checking</label>
+                                                                        <div class="flex flex-col shift_right2">
+                                                                              <label for="input81" class="mb-1 text-gray-700 font-bold text-sm">From repeat count</label>
+                                                                              <input type="text" id="input81" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="3">
+                                                                        </div>
+                                                                        <div class="flex flex-col">
+                                                                              <label for="input82" class="mb-1 text-gray-700 font-bold text-sm">To repeat count</label>
+                                                                              <input type="text" id="input82" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="7">
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check9" class="mr-4">
+                                                                        <label for="check9" class="mr-4 text-gray-700 font-bold">Char length checking</label>
+                                                                        <div class="flex flex-col shift_right3">
+                                                                              <label for="input91" class="mb-1 text-gray-700 font-bold text-sm">Min char counts</label>
+                                                                              <input type="text" id="input91" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="3"><!--input12 means row-1 column2-->
+                                                                        </div>
+
+                                                                        <div class="flex flex-col">
+                                                                              <label for="input92" class="mb-1 text-gray-700 font-bold text-sm">Max char counts</label>
+                                                                              <input type="text" id="input92" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="50">
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    <div class="flex items-center w-full justify-left mb-4 px-6">
+                                                                        <input type="checkbox" id="check10" class="mr-4">
+                                                                        <label for="check10" class="mr-4 text-gray-700 font-bold">Word length checking</label>
+                                                                        <div class="flex flex-col shift_right3">
+                                                                              <label for="input101" class="mb-1 text-gray-700 font-bold text-sm">Min word counts</label>
+                                                                              <input type="text" id="input101" class="flex-grow px-4 py-2 border border-gray-300 rounded-md mr-4" value="1"><!--input12 means row-1 column2-->
+                                                                        </div>
+
+                                                                        <div class="flex flex-col">
+                                                                              <label for="input102" class="mb-1 text-gray-700 font-bold text-sm">Max word counts</label>
+                                                                              <input type="text" id="input102" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="5">
+                                                                        </div>
+
+                                                                    </div>
+
+
+
+
+                                                                    <div class="flex justify-center gap-6 mt-4 mb-4 w-full py-3">
+                                                                        <button type="button" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500" onclick="goBackFirst()">
+                                                                            Back
+                                                                        </button>
+                                                                        <button type="button" id="okButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Ok</button>
+                                                                        <button type="button" id="downloadButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Download</button>
+                                                                        <button type="button" id="invalidShowEditButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Invalid show</button>
+                                                                        <button type="button" id="validShowEditButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Valid show</button>
+                                                                        <button type="button" id="addButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" onclick="showFilePage()">Add</button>
+                                                                    </div>
+                                                        </form>
+                                                            </div>
+                                                        </div>
+
+                                                        </div>
+
+
+
+                                                    <div id="file-upload-sections-container" class="hidden p-6 space-y-4 md:space-y-6 sm:p-8">
+                                                        <div class="container mx-auto">
+                                                            <hr class="border-t border-blue-600 mx-12 mb-3">
+                                                        </div>
+
+                                                        <div class="flex items-lef w-full justify-center mb-4">
+                                                                <label class="mr-4 text-gray-700 text-xl font-bold ">Filter records base on column</label>
+                                                        </div>
+
+                                                        <form id="uploadForm" class="space-y-4 md:space-y-6 flex flex-col items-center mx-2 md:mx-8 lg:mx-16">
+                                                        <!-- Form Field 1 -->
+                                                        <div class="w-full max-w-md pl-10">
+                                                            <label class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white" for="file_input">Upload file</label>
+                                                            <input class="file_input block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-900 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" name="file_input" type="file">
+                                                        </div>
+                                                        <div class="w-full max-w-md">
+                                                            <label class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white" for="file_input">Data separator Symbol</label>
+                                                            <input class="file_input block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-900 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="text_input" name="text_input" type="text">
+                                                        </div>
+
+                                                        <!-- Buttons -->
+                                                        <div class="flex justify-center gap-4 mt-4 mb-4 w-full max-w-md py-3 button-row">
+
+                                                        <button type="button" id="prevFileButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" onclick="goBackFile()">Back</button>
+                                                        <button type="button" id="uploadButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" onclick="uploadFile()">Upload</button>
+                                                        <button type="button" id="uploadShowFileButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" style="white-space: nowrap;">Upload show</button>
+                                                        <button type="button" id="mergeButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">merge</button>
+                                                        <button type="button" id="mergeShowFileButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" style="white-space: nowrap;">Merged show</button>
+                                                        <button type="button" id="updateButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 w-28 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">update</button>
+                                                        <button type="button" id="DBSaveButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" style="white-space: nowrap;">Save in DB</button>
+
+                                                    </div>
+                                                    </form>
+
+                                                    </div>
+
+
+                                                    <!-- Data Table Section -->
+                                                    <div id="dataTableSection" class="hidden overflow-x-auto">
+                                                        <div class="w-full mt-6 ">
+                                                            <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                                            <div class="flex justify-between mb-4 px-4">
+                                                                <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                                <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                                            </div>
+                                                        </div>
+                                                        <!-- Data Table Container -->
+                                                        <div id="dataTableContainer" class="w-full px-4"></div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+
+            </div>
+        </div>
+        <!-- End of project -->
+        <!-- Modal -->
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3><b>Status Logs</b></h3>
+                <hr>
+                <div id="modalMessage"></div>
+            </div>
+        </div>
+        <!-- Loader -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    {% include "partials/scripts.html" %}
+
+    <!-- JavaScript for dropdown functionality -->
+
+    <script>
+
+        var modal = document.getElementById("myModal");
+        var span = document.getElementsByClassName("close")[0];
+
+        function openModal(messages) {
+            var messageHtml = messages.join('<br>');
+            document.getElementById("modalMessage").innerHTML = messageHtml;
+            modal.style.display = "block";
+        }
+        span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                }
+            }
+
+        function showLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "flex";
+            }
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "none";
+            }
+        }
+
+
+        function showDropdown(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideDropdown(id) {
+            setTimeout(() => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            }, 200);
+        }
+
+        function selectOption(option, inputId) {
+            document.getElementById(inputId).value = option;
+            hideDropdown(inputId + '-options');
+        }
+
+        function selectFileType(fileType) {
+            document.getElementById('dropdown1').value = fileType;
+            document.getElementById('dropdown2').value = 'Select option'; // Reset file name dropdown
+
+            fetch('/get_files', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'file_type': fileType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const fileOptions = document.getElementById('file-options');
+                fileOptions.innerHTML = ''; // Clear previous options
+                data.files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = file;
+                    li.onclick = () => selectOption(file, 'dropdown2');
+                    fileOptions.appendChild(li);
+                });
+            });
+        }
+
+
+        document.getElementById('showButton').addEventListener('click', function() {
+
+            const fileType = document.getElementById('dropdown1').value;
+            const fileName = document.getElementById('dropdown2').value;
+            const dataTableSection = document.getElementById('dataTableSection');
+            const button = document.getElementById('showButton');
+
+            // Check if the file type and file name are selected
+            if (fileType === 'Select option' || fileName === 'Select option') {
+                alert('Please select both file type and file name.');
+                return;
+            }
+
+            showLoader()
+            // Check if the data table is currently visible
+            if (dataTableSection.style.display === 'none' || dataTableSection.style.display === '') {
+                // Fetch data and display the data table
+                fetch('/datashow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ 'file_type': fileType, 'file_name': fileName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const dataTableContainer = document.getElementById('dataTableContainer');
+                    dataTableContainer.innerHTML = data.data_table;
+                    $('#dataTableContainer table').DataTable({
+                        "pagingType": "full_numbers",
+                        "pageLength": 5,
+                        "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                    });
+                    dataTableSection.style.display = 'block';
+                    button.textContent = 'Hide'; // Change the button text to "Hide"
+                    hideLoader()
+                });
+            } else {
+                // Hide the data table and change the button text to "Show"
+                dataTableSection.style.display = 'none';
+                button.textContent = 'Show';
+                hideLoader()
+            }
+        });
+
+
+        document.getElementById('deleteButton').addEventListener('click', function() {
+            const fileType = document.getElementById('dropdown1').value;
+            const fileName = document.getElementById('dropdown2').value;
+
+            if (fileType === 'Select option' || fileName === 'Select option') {
+                alert('Please select both file type and file name.');
+                return;
+            }
+
+            fetch('/deletefile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'file_type': fileType, 'file_name': fileName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                // Optionally, you can refresh the file options or data table here
+            });
+        });
+        /*
+        document.getElementById('downloadCsv').addEventListener('click', function() {
+            window.location.href = '/download/csv';
+        });
+
+        document.getElementById('downloadXlsx').addEventListener('click', function() {
+            window.location.href = '/download/xlsx';
+        });
+
+         */
+        // This code is to download the table data in .csv or in .xlsx format
+        //start
+        document.getElementById('downloadCsv').addEventListener('click', function() {
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to CSV format
+            const csvData = convertToCSV(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        document.getElementById('downloadXlsx').addEventListener('click', function() {
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to XLSX format
+            const xlsxData = convertToXLSX(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([xlsxData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Function to convert data to CSV format
+        function convertToCSV(headers, data) {
+            // Combine headers with data
+            const rows = [headers, ...data.map(row => Object.values(row))];
+            return rows.map(row => row.join(',')).join('\n');
+        }
+
+        // Function to convert data to XLSX format (using XLSX.js library)
+        function convertToXLSX(headers, data) {
+            const workbook = XLSX.utils.book_new();
+
+            // Combine headers with data
+            const jsonData = data.map((row, index) => {
+                const rowData = {};
+                headers.forEach((header, i) => {
+                    rowData[header] = row[i];
+                });
+                return rowData;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(jsonData, { header: headers });
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+            const xlsxData = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+            return new Uint8Array(xlsxData.split("").map(char => char.charCodeAt(0)));
+        }
+        //end
+
+        // Close dropdown if clicking outside of it
+        document.addEventListener('click', function (event) {
+            const isClickInside = event.target.closest('.select-container');
+            if (!isClickInside) {
+                document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+
+        // align datatable column towards left
+        $(document).ready(function() {
+    $('#dataTableContainer table').DataTable({
+        "pagingType": "full_numbers",
+        "pageLength": 5,
+        "lengthMenu": [5, 10, 25, 50, 100, 500, 1000], // Add 5 to the dropdown options
+        "drawCallback": function(settings) {
+            // Force align headers to the left after DataTable is drawn
+            $('#dataTableContainer table thead th').css('text-align', 'left');
+            $('#dataTableContainer table tbody td').css('text-align', 'left');
+        }
+    });
+});
+    </script>
+    <script>
+        function showEditPage(){
+            // Remove the existing sections
+            document.getElementById('new-sections-container').classList.remove('hidden');
+        }
+        function goBackFirst(){
+            document.getElementById('new-sections-container').classList.add('hidden');
+            //document.getElementById('file-upload-sections-container').classList.add('hidden');
+        }
+        function goBackFile(){
+           document.getElementById('file-upload-sections-container').classList.add('hidden');
+           //document.getElementById('new-sections-container').classList.remove('hidden');
+        }
+        function showFilePage(){
+            document.getElementById('file-upload-sections-container').classList.remove('hidden');
+        }
+    </script>
+    <script>
+  document.addEventListener('DOMContentLoaded', function() {
+
+
+    const textarea = document.getElementById('customTextarea');
+    const defaultHeight = '40px'; // Default height same as input field
+    const defaultWidth = '200px'; // Default height same as input field
+    const expandedHeight = '200px'; // Expanded height
+    const expandedWidth = '400px';
+
+    textarea.style.height = defaultHeight; // Set initial height
+
+    textarea.addEventListener('focus', function() {
+      textarea.style.height = expandedHeight; // Expand on focus
+      textarea.style.width = expandedWidth;
+    });
+
+    textarea.addEventListener('blur', function() {
+      textarea.style.height = defaultHeight; // Collapse when losing focus
+      textarea.style.width = defaultWidth; // Collapse when losing focus
+    });
+  });
+</script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById("loader");
+
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+
+            document.getElementById('refreshButton').addEventListener('click', function () {
+                showLoader()
+                const fileType = document.getElementById('dropdown1').value;
+                const fileName = document.getElementById('dropdown2').value;
+                const status = document.getElementById('check0').checked;
+
+                if (status) {
+                    if (fileType === 'Select option' || fileName === 'Select option') {
+                        alert('Please select both file type and file name.');
+                        return;
+                    }
+                }
+                fetch('/getItems', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({'file_type': fileType, 'file_name': fileName, 'status': status})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            const dropdownList = document.getElementById('dropdown-options-list');
+                            dropdownList.innerHTML = ''; // Clear existing options
+
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectOptions(item);
+                                dropdownList.appendChild(li);
+                            });
+                        } else {
+                            throw new Error(data.message);
+                        }
+
+                        hideLoader()
+                    })
+                    .catch(error => {
+                        //console.error('Error fetching items:', error);
+                        hideLoader()
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+                    });
+            });
+
+
+            function selectOptions(value) {
+                document.getElementById('column_name_handle').value = value;
+
+                hideDropdown('source_type_handle-options');
+            }
+        });
+
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById("loader");
+
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+
+            document.getElementById('okButton').addEventListener('click', function () {
+                showLoader()
+                const fileType = document.getElementById('dropdown1').value;
+                const fileName = document.getElementById('dropdown2').value;
+                const checkbox0 = document.getElementById('check0').checked;
+                const checkbox1 = document.getElementById('check1').checked;
+                const checkbox2 = document.getElementById('check2').checked;
+                const checkbox3 = document.getElementById('check3').checked;
+                const checkbox4 = document.getElementById('check4').checked;
+                const checkbox5 = document.getElementById('check5').checked;
+                const checkbox6 = document.getElementById('check6').checked;
+                const checkbox7 = document.getElementById('check7').checked;
+                const checkbox8 = document.getElementById('check8').checked;
+                const checkbox9 = document.getElementById('check9').checked;
+                const checkbox10 = document.getElementById('check10').checked;
+                const input_field_column_name_handle = document.getElementById('column_name_handle').value;
+                const input_field_customTextarea = document.getElementById('customTextarea').value;
+                const input_field_input61 = document.getElementById('input61').value;
+                const input_field_input71 = document.getElementById('input71').value;
+                const input_field_input72 = document.getElementById('input72').value;
+                const input_field_input81 = document.getElementById('input81').value;
+                const input_field_input82 = document.getElementById('input82').value;
+                const input_field_input91 = document.getElementById('input91').value;
+                const input_field_input92 = document.getElementById('input92').value;
+                const input_field_input101 = document.getElementById('input101').value;
+                const input_field_input102 = document.getElementById('input102').value;
+
+                if (checkbox0) {
+
+                    if (fileType === 'Select option' || fileName === 'Select option') {
+                        alert('Please select both file type and file name.');
+                        return;
+                    }
+                }
+                fetch('/exportEditOk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'file_type': fileType,
+                        'file_name': fileName,
+                        'checkbox0': checkbox0,
+                        'checkbox1': checkbox1,
+                        'checkbox2': checkbox2,
+                        'checkbox3': checkbox3,
+                        'checkbox4': checkbox4,
+                        'checkbox5': checkbox5,
+                        'checkbox6': checkbox6,
+                        'checkbox7': checkbox7,
+                        'checkbox8': checkbox8,
+                        'checkbox9': checkbox9,
+                        'checkbox10': checkbox10,
+                        'input_field_column_name_handle': input_field_column_name_handle,
+                        'input_field_customTextarea': input_field_customTextarea,
+                        'input_field_input61': input_field_input61,
+                        'input_field_input71': input_field_input71,
+                        'input_field_input72': input_field_input72,
+                        'input_field_input81': input_field_input81,
+                        'input_field_input82': input_field_input82,
+                        'input_field_input91': input_field_input91,
+                        'input_field_input92': input_field_input92,
+                        'input_field_input101': input_field_input101,
+                        'input_field_input102': input_field_input102
+
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            openModal(["Operation completed successfully!"]);
+                        }else {
+                            throw new Error(data.message);
+                        }
+                        hideLoader()
+                    })
+                    .catch(error => {console.error('Error fetching items:', error);
+                    hideLoader()
+                    var messages = [
+                        error.message // Display the actual error message
+                    ];
+                    openModal(messages);});
+            });
+        });
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.getElementById("loader");
+
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+
+            document.getElementById('invalidShowEditButton').addEventListener('click', function () {
+                showLoader()
+                const dataTableSection = document.getElementById('dataTableSection');
+                const button = document.getElementById('invalidShowEditButton');
+                const status = document.getElementById('check0').checked;
+
+                // Check if the data table section is currently hidden or not set
+                if (dataTableSection.style.display === 'none' || dataTableSection.style.display === '') {
+                    // Show the data table and change the button text to "Hide"
+                    fetch('/invalidEditShow', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({'status': status})
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === "success") {
+                                const dataTableContainer = document.getElementById('dataTableContainer');
+                                dataTableContainer.innerHTML = data.data_table;
+                                $('#dataTableContainer table').DataTable({
+                                    "pagingType": "full_numbers",
+                                    "pageLength": 5,
+                                    "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                                });
+                                dataTableSection.style.display = 'block';
+                                button.textContent = 'Invalid Hide'; // Change the button text to "Hide"
+                            } else {
+                            throw new Error(data.message);
+                        }
+                            hideLoader()
+                        }) .catch(error => {console.error('Error fetching items:', error);
+                    hideLoader()
+                    var messages = [
+                        error.message // Display the actual error message
+                    ];
+                    openModal(messages);});
+                } else {
+                    // Hide the data table and change the button text to "Show"
+
+                    dataTableSection.style.display = 'none';
+                    button.textContent = 'Invalid Show';
+                    hideLoader()
+                }
+            });
+
+            /* valid show*/
+            document.getElementById('validShowEditButton').addEventListener('click', function () {
+                showLoader()
+                const dataTableSection = document.getElementById('dataTableSection');
+                const button = document.getElementById('validShowEditButton');
+                const status = document.getElementById('check0').checked;
+
+                // Check if the data table section is currently hidden or not set
+                if (dataTableSection.style.display === 'none' || dataTableSection.style.display === '') {
+                    // Show the data table and change the button text to "Hide"
+                    fetch('/validEditShow', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({'status': status})
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === "success") {
+                                const dataTableContainer = document.getElementById('dataTableContainer');
+                                dataTableContainer.innerHTML = data.data_table;
+                                $('#dataTableContainer table').DataTable({
+                                    "pagingType": "full_numbers",
+                                    "pageLength": 5,
+                                    "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                                });
+                                dataTableSection.style.display = 'block';
+                                button.textContent = 'Valid Hide'; // Change the button text to "Hide"
+                            } else {
+                            throw new Error(data.message);
+                        }
+                            hideLoader()
+                        }) .catch(error => {console.error('Error fetching items:', error);
+                    hideLoader()
+                    var messages = [
+                        error.message // Display the actual error message
+                    ];
+                    openModal(messages);});
+                } else {
+                    // Hide the data table and change the button text to "Show"
+                    dataTableSection.style.display = 'none';
+                    button.textContent = 'Valid Show';
+                    hideLoader()
+                }
+            });
+
+
+            //download the file
+
+            document.getElementById('downloadButton').addEventListener('click', function () {
+                window.location.href = '/editDownloadShow';
+            });
+            /*
+            document.getElementById('downloadButton').addEventListener('click', function () {
+
+                fetch('/editDownloadShow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+
+                        if (data.status === "error") {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        hideLoader()
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+                    });
+            });
+
+             */
+
+        });
+
+
+
+    </script>
+    <script>
+    function uploadFile() {
+        const form = document.getElementById('uploadForm');
+        const formData = new FormData(form);
+
+        fetch('/editUploadFile', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.status === "success") {
+                openModal(["File uploaded successfully!"]);
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            var messages = [
+                error.message // Display the actual error message
+            ];
+            openModal(messages); // Ensure this function is defined
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var loader = document.getElementById("loader");
+
+        function showLoader() {
+            loader.style.display = "flex";
+        }
+
+        function hideLoader() {
+            loader.style.display = "none";
+        }
+
+        /* show button of file upload in Export Data*/
+        document.getElementById('uploadShowFileButton').addEventListener('click', function () {
+                showLoader();  // Show loader when the request starts
+                const dataTableSection = document.getElementById('dataTableSection');
+                const button = document.getElementById('uploadShowFileButton');
+
+                // Check if the data table section is currently visible
+                if (dataTableSection.style.display === 'block') {
+                    // Hide the data table and change the button text to "Upload show"
+                    dataTableSection.style.display = 'none';
+                    button.textContent = 'Upload show';
+                    hideLoader();  // Hide loader since there's nothing else to do
+                } else {
+                    // Make a POST request to the server to get the uploaded file data
+                    fetch('/uploadShowUploadedFile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',  // Adjust according to your needs
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Something wrong with data!');
+                        }
+                        return response.json();  // Parse the JSON response
+                    })
+                    .then(data => {
+                        if (data.status === "success") {
+                            const dataTableContainer = document.getElementById('dataTableContainer');
+                            dataTableContainer.innerHTML = data.data_table;
+
+                            // Initialize DataTable
+                            $('#dataTableContainer table').DataTable({
+                                "pagingType": "full_numbers",
+                                "pageLength": 5,
+                                "lengthMenu": [5, 10, 25, 50, 100, 500, 1000]  // Customize the dropdown options
+                            });
+
+                            // Show the data table and change the button text to "Upload hide"
+                            dataTableSection.style.display = 'block';
+                            button.textContent = 'Upload hide';
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        var messages = [error.message];
+                        openModal(messages);
+                    })
+                    .finally(() => {
+                        hideLoader();
+                    });
+                }
+            });
+
+
+
+        /* merged data  */
+        /*
+        document.getElementById('mergeShowFileButton').addEventListener('click', function () {
+            showLoader()
+            const dataTableSection = document.getElementById('dataTableSection');
+            const button = document.getElementById('mergeShowFileButton');
+
+            // Check if the data table section is currently visible
+            if (dataTableSection.style.display === 'block' || dataTableSection.style.display === '') {
+                // Hide the data table and change the button text to "Show"
+                dataTableSection.style.display = 'none';
+                button.textContent = 'Merged show';
+            } else {
+                // Show the data table and change the button text to "Hide"
+                fetch('/mergedShowUploadedFile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            const dataTableContainer = document.getElementById('dataTableContainer');
+                            dataTableContainer.innerHTML = data.data_table;
+                            $('#dataTableContainer table').DataTable({
+                                "pagingType": "full_numbers",
+                                "pageLength": 5,
+                                "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                            });
+                            dataTableSection.style.display = 'block';
+                            button.textContent = 'Merged hide'; // Change the button text to "Hide"
+                        }
+
+                        hideLoader()
+                    })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });*/
+
+        document.getElementById('mergeShowFileButton').addEventListener('click', function () {
+    showLoader();  // Show loader when the request starts
+    const dataTableSection = document.getElementById('dataTableSection');
+    const button = document.getElementById('mergeShowFileButton');
+
+    // Ensure dataTableSection has an explicit initial display state
+    if (!dataTableSection.style.display) {
+        dataTableSection.style.display = 'none';  // Set to 'none' by default
+    }
+
+    // Check if the data table section is currently visible
+    if (dataTableSection.style.display === 'block') {
+        // Hide the data table and change the button text to "Merged show"
+        dataTableSection.style.display = 'none';
+        button.textContent = 'Merged show';
+        hideLoader();  // Hide loader since there's nothing else to do
+    } else {
+        // Make a POST request to the server to get the uploaded file data
+        fetch('/mergedShowUploadedFile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',  // Adjust if needed
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Something went wrong with the data!');
+            }
+            return response.json();  // Parse the JSON response
+        })
+        .then(data => {
+            if (data.status === "success") {
+                const dataTableContainer = document.getElementById('dataTableContainer');
+                dataTableContainer.innerHTML = data.data_table;
+
+                // Initialize DataTable
+                $('#dataTableContainer table').DataTable({
+                    "pagingType": "full_numbers",
+                    "pageLength": 5,
+                    "lengthMenu": [5, 10, 25, 50, 100, 500, 1000]  // Customize the dropdown options
+                });
+
+                // Show the data table and change the button text to "Merged hide"
+                dataTableSection.style.display = 'block';
+                button.textContent = 'Merged hide';
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            var messages = [error.message];
+            openModal(messages);
+        })
+        .finally(() => {
+            hideLoader();
+        });
+    }
+});
+
+
+
+
+        /* merge the data of dataframes */
+        document.getElementById('mergeButton').addEventListener('click', function () {
+            showLoader()
+
+            //const fileType = document.getElementById('dropdown1').value;
+            //const fileName = document.getElementById('dropdown2').value;
+            fetch('/mergeUploadedFileData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                //body: new URLSearchParams({'file_type': fileType, 'file_name': fileName})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        openModal(["Successfully merged!"]);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                    hideLoader()
+                })
+                .catch(error => {
+                    hideLoader()
+                    var messages = [
+                        error.message
+                    ];
+                    openModal(messages);
+                });
+        });
+
+        //update method newly added
+        document.getElementById('updateButton').addEventListener('click', function () {
+                showLoader()
+                const fileType = document.getElementById('dropdown1').value;
+                const fileName = document.getElementById('dropdown2').value;
+
+                fetch('/updateFileData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'file_type': fileType, 'file_name': fileName})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status==='success'){
+                            openModal(["Successfully updated!"])
+                        } else{
+                            throw new Error(data.message);
+                        }
+                        hideLoader()
+                    })
+                    .catch(error => {
+                        hideLoader()
+                        var messages = [
+                        error.message
+                    ];
+                    openModal(messages);
+                    });
+            });
+
+    });
+
+</script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var loader = document.getElementById("loader");
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+            function openModal(messages) {
+                var messageHtml = messages.join('<br>');
+                document.getElementById("modalMessage").innerHTML = messageHtml;
+                modal.style.display = "block";
+            }
+            function showLoader() {
+                loader.style.display = "flex";
+            }
+
+            function hideLoader() {
+                loader.style.display = "none";
+            }
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            /*
+            function performLoaderOperation() {
+                showLoader(); // Show loader
+
+                // Make an AJAX request to the Flask backend
+                fetch('/save_in_DB', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                        //console.log("Response Status:", response.status);
+                        //console.log("Response OK:", response.ok);
+
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error("Error Data:", data);
+                                throw new Error(data.message || 'Unknown error');
+                            });
+                        }
+                        return response.json();
+                    })
+                .then(data => {
+                    //console.log("Response Data:", data);
+
+                        if (data.status === "success") {
+                            //console.log('Success:', data);
+                            var messages = ["Operation Successfully done!"];
+                            openModal(messages);
+                        } else {
+                            throw new Error(data.message);
+                        }
+
+                        hideLoader(); // Hide loader after operation completion
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                        hideLoader(); // Hide loader even if there's an error
+
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+                });
+            }*/
+            function performLoaderOperation() {
+                    showLoader(); // Show loader
+
+                    // Make an AJAX request to initiate the operation
+                    fetch('/save_in_DB', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.message || 'Unknown error occurred while starting the operation.');
+                            });
+                        }
+                        return response.json(); // Expecting { status: "success", task_id: "task_123" }
+                    })
+                    .then(data => {
+                        if (data.status === "success" && data.task_id) {
+                            // Task started successfully, now poll for task completion
+                            pollTaskStatus(data.task_id);
+                        } else {
+                            throw new Error("Failed to start the operation.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error.message);
+                        hideLoader(); // Hide loader even if there's an error
+                        openModal([error.message]); // Show error message in modal
+                    });
+                }
+
+                // Function to poll the task status until it is completed
+                function pollTaskStatus(taskId) {
+                    const pollInterval = 3000; // Poll every 3 seconds
+
+                    function checkTask() {
+                        fetch(`/task_status_save_DB/${taskId}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    throw new Error(data.message || 'Unknown error occurred while polling task status.');
+                                });
+                            }
+                            return response.json(); // Expecting { status: "Completed" | "Processing" | "Error" }
+                        })
+                        .then(data => {
+                            if (data.status === "Completed") {
+                                hideLoader(); // Hide loader after successful operation
+                                openModal(["Operation successfully completed!"]);
+                            } else if (data.status === "Error") {
+                                hideLoader(); // Hide loader on error
+                                openModal([`${data.message}`]);
+                            } else {
+                                // Still processing, continue polling
+                                setTimeout(checkTask, pollInterval);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error.message);
+                            hideLoader(); // Hide loader on error
+                            openModal([error.message]);
+                        });
+                    }
+
+                    // Start polling for the task status
+                    checkTask();
+                }
+
+
+            document.getElementById("DBSaveButton").onclick = performLoaderOperation;
+        });
+    </script>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+</body>
+</html>

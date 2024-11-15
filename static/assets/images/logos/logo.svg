@@ -1,0 +1,25 @@
+<svg width="500" height="100" viewBox="0 0 500 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define styles for text and logo -->
+  <style>
+    .logo-text {
+      font-family: Arial, sans-serif;
+      font-size: 50px;
+      font-weight: bold;
+      fill: #FFAA33;
+    }
+    .logo-d {
+      font-family: Arial, sans-serif;
+      font-size: 90px;
+      font-weight: bold;
+      fill: #FFD700; /* Gold color */
+    }
+  </style>
+
+  <!-- Create the logo with merged letters "DD" -->
+  <text x="10" y="70" class="logo-d">D</text>
+  <!-- Adjust the second "D" to be slightly left and vertically centered -->
+  <text x="35" y="85" class="logo-d" transform="translate(-5, 0)">D</text>
+
+  <!-- Add text to the right of the logo -->
+  <text x="100" y="60" class="logo-text">DeDuplication</text>
+</svg>

@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include 'partials/head.html' %}
+    <title>Data Preprocessing</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+    <style>
+        /* Custom CSS to ensure dropdown arrow visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px; /* Space for the arrow */
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px; /* Adjust size of the arrow */
+        }
+
+        /* new added */
+        #dataTableSection {
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+
+    </style>
+    <style>
+        /* Container for the custom dropdown */
+.select-container {
+    position: relative;
+    width: 200px; /* Width of the dropdown */
+}
+
+
+/* Dropdown options container */
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%; /* Match the width of the input */
+    max-height: 80px; /* Adjust to show options comfortably */
+    overflow-y: auto; /* Scroll if there are more options */
+    background-color: white; /* White background */
+    color: black; /* Black text */
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: none; /* Hidden by default */
+    z-index: 10; /* Ensure it appears above other elements */
+}
+
+/* Style for list items */
+.dropdown-options ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown-options li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.dropdown-options li:hover {
+    background-color: #f0f0f0; /* Highlight on hover */
+}
+
+.selected-option {
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 1px;
+    background-color: white; /* White background for the input */
+    color: black; /* Black text for the input */
+    width: 100%; /* Ensure the input takes full width of container */
+    box-sizing: border-box; /* Ensure padding and border are included in width */
+}
+
+    </style>
+    <!--
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    -->
+    <style>
+        textarea {
+            transition: all 0.3s ease; /* Smooth transition */
+        }
+        textarea:focus {
+            resize: none; /* Prevent default resizing */
+        }
+    </style>
+    <style>
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+    <style>
+        /* Loader styling */
+        .loaderTrans {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        /* Spinner styling */
+            .spinnerTrans {
+                border: 16px solid #f3f3f3; /* Light grey */
+                border-top: 16px solid #3498db; /* Blue */
+                border-radius: 50%;
+                width: 120px;
+                height: 120px;
+                animation: spin 2s linear infinite;
+                position: relative;
+            }
+
+        /* Count text styling */
+            .count-text {
+                position: absolute;
+                top: 44.5%;
+                left: 54%;
+                transform: translate(-50%, -50%); /* Centering the count text */
+                font-size: 24px;
+                color: white; /* Adjust color as needed */
+                z-index: 2; /* Make sure it's on top of the spinner */
+            }
+
+            /* Spinner animation */
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+    </style>
+
+</head>
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <div class="w-full page-wrapper xl:px-6 px-0">
+
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <div class="card relative mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-settings ps-2 text-4xl"></i>Data Preprocessing</h6>
+                                <div class="card">
+                                    <section class="flex flex-col pt-6">
+                                        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                                            <!-- First line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="text_replacement" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4 text-blue-900">Text replacement</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown1" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown1-options">
+                                                                    <ul>
+
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown1')">{{ column }}</li>
+                                                                        {% endfor %}
+
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown1"
+                                                                    name="dropdown1"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown1-options')"
+                                                                    onblur="hideDropdown('dropdown1-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+
+                                                        <!-- Fourth Input Field -->
+                                                        <div class="flex flex-col w-[300px]">
+                                                            <label for="replacement_input1" class="block text-gray-700 font-medium mb-1">Old text</label>
+                                                            <input
+                                                                type="text"
+                                                                id="replacement_input1"
+                                                                name="replacement_input1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[300px]">
+                                                            <label for="replacement_input2" class="block text-gray-700 font-medium mb-1">New text</label>
+                                                            <input
+                                                                type="text"
+                                                                id="replacement_input2"
+                                                                name="replacement_input2"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="textReplacementButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                            <!-- 2nd line added -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="handle_null_value" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Handle null value</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown2" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown2-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown2')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown2"
+                                                                    name="dropdown2"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown2-options')"
+                                                                    onblur="hideDropdown('dropdown2-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_null_handle" class="block text-gray-700 font-medium mb-1">Select action</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_null_handle-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Remove', 'dropdown_null_handle')">Remove</li>
+                                                                        <li onclick="selectOption('Fill', 'dropdown_null_handle')">Fill</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_null_handle"
+                                                                    name="dropdown_null_handle"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_null_handle-options')"
+                                                                    onblur="hideDropdown('dropdown_null_handle-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Fourth Input Field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="handle_null_input1" class="block text-gray-700 font-medium mb-1">NA values</label>
+                                                            <input
+                                                                type="text"
+                                                                id="handle_null_input1"
+                                                                name="handle_null_input1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="handle_null_input2" class="block text-gray-700 font-medium mb-1">Fill value</label>
+                                                            <input
+                                                                type="text"
+                                                                id="handle_null_input2"
+                                                                name="handle_null_input2"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="nullValueHandleButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+
+                                            <!-- 3rd line -->
+
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="alter_column_date" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Alter columns position & Import date</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- method field -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_alter_column_date" class="block text-gray-700 font-medium mb-1">Select action</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_alter_column_date-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Alter columns pos', 'dropdown_alter_column_date')">Alter columns pos</li>
+                                                                        <li onclick="selectOption('Import date', 'dropdown_alter_column_date')">Import date</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_alter_column_date"
+                                                                    name="dropdown_alter_column_date"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_alter_column_date-options')"
+                                                                    onblur="hideDropdown('dropdown_alter_column_date-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_alter_column" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_alter_column-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOptions('{{ column }}', 'dropdown_alter_column', 'dropdown_alter_column1')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_alter_column"
+                                                                    name="dropdown_alter_column"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_alter_column-options')"
+                                                                    onblur="hideDropdown('dropdown_alter_column-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+
+                                                        <!-- Fourth Input Field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="dropdown_alter_column1" class="block text-gray-700 font-medium mb-1">Alter column format</label>
+                                                            <input
+                                                                type="text"
+                                                                id="dropdown_alter_column1"
+                                                                name="dropdown_alter_column1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="dropdown_alter_column_date2" class="block text-gray-700 font-medium mb-1">Date column name</label>
+                                                            <input
+                                                                type="text"
+                                                                id="dropdown_alter_column_date2"
+                                                                name="dropdown_alter_column_date2"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="alterColumnDateButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                            <!-- 4th line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="handle_mobile_no" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST" >
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Mobile no. handling</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown3" class="block text-gray-700 font-medium mb-1">Select option</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown3-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown3')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown3"
+                                                                    class="selected-option"
+                                                                    name="dropdown3"
+                                                                    onfocus="showDropdown('dropdown3-options')"
+                                                                    onblur="hideDropdown('dropdown3-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="mobile_input1" class="block text-gray-700 font-medium mb-1">Prefix value</label>
+                                                            <input
+                                                                type="text"
+                                                                id="mobile_input1"
+                                                                name="mobile_input1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+
+                                                        <!-- Fourth Input Field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="mobile_input2" class="block text-gray-700 font-medium mb-1">Suffix value</label>
+                                                            <input
+                                                                type="text"
+                                                                id="mobile_input2"
+                                                                name="mobile_input2"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="mobile_input3" class="block text-gray-700 font-medium mb-1">Middle value</label>
+                                                            <input
+                                                                type="text"
+                                                                id="mobile_input3"
+                                                                name="mobile_input3"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="handleMobileNoButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                             <!-- 5th line -->
+                                            <div id="handle_email" class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST" >
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Email handling</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown4" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown4-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown4')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown4"
+                                                                    name="dropdown4"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown4-options')"
+                                                                    onblur="hideDropdown('dropdown4-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="email_domain_input" class="block text-gray-700 font-medium mb-1">Email domain values</label>
+                                                            <input
+                                                                type="text"
+                                                                id="email_domain_input"
+                                                                name="email_domain_input"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+
+                                                        <div class="flex flex-col w-[100px]">
+
+                                                            <button type="button" id="applyAlgo" value="apply_domain_algo" class="mt-6 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Apply domain algo</button>
+                                                        </div>
+
+
+                                                        <!-- Fourth Input Field -->
+                                                        <!--
+                                                        <div class="flex flex-col w-[100px]">
+                                                            <button type="button" id="applyAlgo" class="mt-6 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">See & Edit</button>
+                                                        </div>
+                                                        -->
+                                                        <form>
+                                                            <div class="flex flex-col w-[100px]">
+                                                            <label for="comments" class="block text-gray-700 font-medium mb-1">Domain mapping</label>
+                                                            <textarea id="comments" name="comments" rows="1" cols="23"></textarea>
+                                                            </div>
+                                                        </form>
+
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button" id="email_ok" value="ok"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                             <!-- 6th line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="handle_emoji_translation" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Remove emoji,Invalid Chars & Translation</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown5" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown5-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown5')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown5"
+                                                                    class="selected-option"
+                                                                    name="dropdown5"
+                                                                    onfocus="showDropdown('dropdown5-options')"
+                                                                    onblur="hideDropdown('dropdown5-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_emoji" class="block text-gray-700 font-medium mb-1">Remove emoji</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_emoji-options">
+                                                                    <ul>
+                                                                        <!--
+                                                                        <li onclick="selectOption('Yes', 'dropdown_emoji')">Yes</li>
+                                                                        <li onclick="selectOption('No', 'dropdown_emoji')">No</li>
+                                                                        -->
+                                                                        <li onclick="selectOption('Emoji', 'dropdown_emoji')">Emoji</li>
+                                                                        <li onclick="selectOption('Invalid Chars', 'dropdown_emoji')">Invalid Chars</li>
+                                                                        <li onclick="selectOption('Emoji + Invalid Chars', 'dropdown_emoji')">Emoji + Invalid Chars</li>
+                                                                        <li onclick="selectOption('None', 'dropdown_emoji')">None</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_emoji"
+                                                                    class="selected-option"
+                                                                    name="dropdown_emoji"
+                                                                    onfocus="showDropdown('dropdown_emoji-options')"
+                                                                    onblur="hideDropdown('dropdown_emoji-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_translation" class="block text-gray-700 font-medium mb-1">Translation</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_translation-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Yes', 'dropdown_translation')">Yes</li>
+                                                                        <li onclick="selectOption('No', 'dropdown_translation')">No</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_translation"
+                                                                    class="selected-option"
+                                                                    name="dropdown_translation"
+                                                                    onfocus="showDropdown('dropdown_translation-options')"
+                                                                    onblur="hideDropdown('dropdown_translation-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_language" class="block text-gray-700 font-medium mb-1">Language</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_language-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('English', 'dropdown_language')">English</li>
+                                                                        <li onclick="selectOption('Hindi', 'dropdown_language')">Hindi</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_language"
+                                                                    class="selected-option"
+                                                                    name="dropdown_language"
+                                                                    onfocus="showDropdown('dropdown_language-options')"
+                                                                    onblur="hideDropdown('dropdown_language-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="TranslationAndRemoveEmoji"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                             <!-- 7th line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="handle_rename_type_conversion_date_parsing" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Rename column,Type conversion & Parsing date</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown6" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown6-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown6')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown6"
+                                                                    name="dropdown6"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown6-options')"
+                                                                    onblur="hideDropdown('dropdown6-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+                                                       <div class="select-container flex flex-col">
+                                                            <label for="dropdown_rename" class="block text-gray-700 font-medium mb-1">Select action</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_rename-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Rename', 'dropdown_rename')">Rename</li>
+                                                                        <li onclick="selectOption('Type convert', 'dropdown_rename')">Type convert</li>
+                                                                        <li onclick="selectOption('Date parsing', 'dropdown_rename')">Date parsing</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_rename"
+                                                                    name="dropdown_rename"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_rename-options')"
+                                                                    onblur="hideDropdown('dropdown_rename-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_type_convert" class="block text-gray-700 font-medium mb-1">Select data type</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_type_convert-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('String', 'dropdown_type_convert')">String</li>
+                                                                        <li onclick="selectOption('Integer', 'dropdown_type_convert')">Integer</li>
+                                                                        <li onclick="selectOption('Floating point', 'dropdown_type_convert')">Floating point</li>
+                                                                        <li onclick="selectOption('Datetime', 'dropdown_type_convert')">Datetime</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_type_convert"
+                                                                    name="dropdown_type_convert"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_type_convert-options')"
+                                                                    onblur="hideDropdown('dropdown_type_convert-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="rename_input1" class="block text-gray-700 font-medium mb-1">Rename as</label>
+                                                            <input
+                                                                type="text"
+                                                                id="rename_input1"
+                                                                name="rename_input1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="Enter null values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="renameTypeConvertDateParsingButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                            <!-- 8th line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="handle_state_and_city" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">State & city filter</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown7" class="block text-gray-700 font-medium mb-1">Select State column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown7-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown7')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown7"
+                                                                    name="dropdown7"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown7-options')"
+                                                                    onblur="hideDropdown('dropdown7-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Other Input Fields and Button here -->
+                                                       <div class="select-container flex flex-col">
+                                                            <label for="dropdown_city" class="block text-gray-700 font-medium mb-1">Select city column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_city-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown_city')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_city"
+                                                                    name="dropdown_city"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_city-options')"
+                                                                    onblur="hideDropdown('dropdown_city-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- LIST OF STATE -->
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_list_state" class="block text-gray-700 font-medium mb-1">list of States</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_list_state-options">
+                                                                    <ul>
+                                                                        {% for column in state_city_dict.keys() %}
+                                                                            <li onclick="selectCitiesName('{{ column }}')">{{column}}</li>
+                                                                        {% endfor %}
+                                                                        <li onclick="">None</li>
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_list_state"
+                                                                    name="dropdown_list_state"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_list_state-options')"
+                                                                    onblur="hideDropdown('dropdown_list_state-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- LIST OF CITIES -->
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_list_city" class="block text-gray-700 font-medium mb-1">list of cities</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_list_city-options">
+                                                                    <ul id="cities-options">
+                                                                        <!-- Options will be populated here -->
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_list_city"
+                                                                    name="dropdown_list_city"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_list_city-options')"
+                                                                    onblur="hideDropdown('dropdown_list_city-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="stateAndCityButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+
+                                            <div class="container mx-auto">
+                                                <hr class="border-t border-blue-600 mx-12 mb-3">
+                                            </div>
+                                             <!-- 9th line -->
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
+                                                <form id="remove_data" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
+                                                    <!-- Centered Main Label -->
+                                                    <h2 class="text-lg font-bold text-left px-4">Remove data</h2>
+
+                                                    <div class="flex flex-wrap gap-6 items-start px-4">
+                                                        <!-- Dropdown Menu -->
+
+
+                                                        <!-- Other Input Fields and Button here -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_format" class="block text-gray-700 font-medium mb-1">Remove format</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_format-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Row', 'dropdown_format')">Row</li>
+                                                                        <li onclick="selectOption('Column', 'dropdown_format')">Column</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_format"
+                                                                    name="dropdown_format"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_format-options')"
+                                                                    onblur="hideDropdown('dropdown_format-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown8" class="block text-gray-700 font-medium mb-1">Select column</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown8-options">
+                                                                    <ul>
+                                                                        {% for column in column_headings %}
+                                                                            <li onclick="selectOption('{{ column }}', 'dropdown8')">{{ column }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown8"
+                                                                    class="selected-option"
+                                                                    name="dropdown8"
+                                                                    onfocus="showDropdown('dropdown8-options')"
+                                                                    onblur="hideDropdown('dropdown8-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_type" class="block text-gray-700 font-medium mb-1">Value/Range Type</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_type-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Date', 'dropdown_type')">Date</li>
+                                                                        <li onclick="selectOption('Integer', 'dropdown_type')">Number</li>
+                                                                        <li onclick="selectOption('Other', 'dropdown_type')">Other</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_type"
+                                                                    name="dropdown_type"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_type-options')"
+                                                                    onblur="hideDropdown('dropdown_type-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown_remove_by" class="block text-gray-700 font-medium mb-1">Remove by</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown_remove_by-options">
+                                                                    <ul>
+                                                                        <li onclick="selectOption('Value', 'dropdown_remove_by')">Value</li>
+                                                                        <li onclick="selectOption('Range', 'dropdown_remove_by')">Range</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown_remove_by"
+                                                                    name="dropdown_remove_by"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown_remove_by-options')"
+                                                                    onblur="hideDropdown('dropdown_remove_by-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex flex-col w-[300px]">
+                                                            <label for="remove_input1" class="block text-gray-700 font-medium mb-1">Remove for value</label>
+                                                            <input
+                                                                type="text"
+                                                                id="remove_input1"
+                                                                name="remove_input1"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="yyyy-mm-dd or values"
+                                                            />
+                                                        </div>
+
+                                                        <!-- Fourth Input Field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="remove_input2" class="block text-gray-700 font-medium mb-1">Remove from</label>
+                                                            <input
+                                                                type="text"
+                                                                id="remove_input2"
+                                                                name="remove_input2"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="yyyy-mm-dd or values"
+                                                            />
+                                                        </div>
+                                                        <!-- 6th Input field -->
+                                                        <div class="flex flex-col w-[200px]">
+                                                            <label for="remove_input3" class="block text-gray-700 font-medium mb-1">Remove to</label>
+                                                            <input
+                                                                type="text"
+                                                                id="remove_input3"
+                                                                name="remove_input3"
+                                                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                placeholder="yyyy-mm-dd or values"
+                                                            />
+                                                        </div>
+                                                        <!-- Button -->
+                                                        <div class="flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                id="removeDataButton"
+                                                                class="text-white mt-6 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out"
+                                                            >
+                                                                Ok
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <!-- Centered buttons -->
+
+                                            <div class="flex flex-col items-center justify-center min-h-[200px] p-4">
+                                                <div class="flex gap-4 mt-4 mb-4 justify-center w-full max-w-md">
+                                                    <a href="{{ url_for('fileupload') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Prev</a>
+                                                    <button type="button" id="showButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                    <button type="button" id="refreshButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" style="white-space: nowrap;">Reset Data</button>
+                                                    <a href="{{ url_for('removeDuplicate') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Next</a>
+                                                </div>
+                                            </div>
+                                            <!-- End Centered buttons -->
+                                            <!-- Data Table and Download Buttons -->
+                                                <div class="w-full mt-4 ">
+                                                    <!-- Initially hidden elements -->
+                                                    <div id="dataTableSection" class="hidden">
+                                                        <!-- Table Name -->
+                                                        <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                                        <div class="flex justify-between mb-4 px-4">
+                                                            <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                            <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                                        </div>
+
+                                                    <div id="dataTableContainer" class="w-full px-4"></div>
+                                                    </div>
+                                                </div>
+
+                                        </div>
+
+                                    </section>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+
+
+
+
+
+                </main>
+                <!-- Main Content End -->
+
+
+            </div>
+        </div>
+        <!-- End of project -->
+        <!-- Loader -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+        </div>
+        <div id="TranslationLoader" class="loaderTrans">
+            <div class="spinnerTrans"></div>
+            <span id="translationCount" class="count-text">0</span> <!-- This will hold the count -->
+        </div>
+
+    </main>
+    {% include "partials/scripts.html" %}
+
+    <!-- handle refresh button of data preprocess -->
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var loader = document.getElementById("loader");
+        function showLoader() {
+            loader.style.display = "flex";
+        }
+
+        function hideLoader() {
+            loader.style.display = "none";
+        }
+            document.getElementById('refreshButton').addEventListener('click', function() {
+                showLoader()
+
+                fetch('/refreshData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data
+                    console.log(data.message); // Example: Display a message in the console
+                    //hideLoader()
+                    //alert(data.message); // Show an alert with the response message
+                })
+                .catch(error => {
+                    console.error('Error:', error)
+                    //hideLoader()
+                })
+                .finally(() => {
+                    // Ensure the loader is hidden after request completes (success or error)
+                    hideLoader();
+                });
+            });
+        });
+    </script>
+
+    <!-- text replacement -->
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var loader = document.getElementById("loader");
+    function showLoader() {
+        loader.style.display = "flex";
+    }
+
+    function hideLoader() {
+        loader.style.display = "none";
+    }
+    /* text replacement */
+    document.getElementById('textReplacementButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('text_replacement');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/text_replacement', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+             //hideLoader()
+            if (result.status==="error"){
+                alert(result.message)
+            }
+            //console.log(result);
+
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+
+    /* null value handling */
+    document.getElementById('nullValueHandleButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('handle_null_value');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/handle_null_value', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            alert(error)
+            //hideLoader()
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+    /* Alter columns position & Import date */
+    document.getElementById('alterColumnDateButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('alter_column_date');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/alterColumnPosImportDate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+
+    /* Mobile no. handling */
+    document.getElementById('handleMobileNoButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('handle_mobile_no');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/handle_mobile_no', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+
+    /* Remove emoji & translation */
+    /*
+    document.getElementById('TranslationAndRemoveEmoji').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('handle_emoji_translation');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/handle_emoji_translation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            hideLoader()
+            if (result.status==='error'){
+                //alert(result.message)
+                let error=result.message
+                const substring1 = "is not valid JSON";
+                const substring2 = "Unexpected token";
+                if (error.includes(substring1) || error.includes(substring2)) {
+                    alert("May be Internet Issues, Please check!, Error: "+error)
+                } else {
+                    alert("Error: " + error);
+                }
+
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            hideLoader()
+            const substring1 = "is not valid JSON";
+            const substring2 = "Unexpected token";
+            if (error.includes(substring1) || error.includes(substring2)) {
+                alert("May be Internet Issues, Please check!, Error: "+error)
+            } else {
+                alert("Error: ", error);
+            }
+            // Handle any errors
+        });
+    });
+
+     */
+    function showLoaderTrans() {
+            const loader = document.getElementById('TranslationLoader');
+            if (loader) {
+                loader.style.display = "flex";
+            }
+        }
+
+        function hideLoaderTrans() {
+            const loader = document.getElementById('TranslationLoader');
+            if (loader) {
+                loader.style.display = "none";
+            }
+        }
+
+    /* Remove emoji & translation */
+    document.getElementById('TranslationAndRemoveEmoji').addEventListener('click', function() {
+            // Collect form data
+            showLoaderTrans();
+            const form = document.getElementById('handle_emoji_translation');
+            const formData = new FormData(form);
+
+            // Create an object from FormData
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            let taskId;
+            //let totalTranslations = 0;
+            updateTranslationCount(0);
+
+            // Send data using fetch API to start the task
+            fetch('/handle_emoji_translation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    // Get taskId from the server
+                    taskId = result.task_id;
+
+                    // Start polling for task status
+                    pollTaskStatus(taskId);
+                } else {
+                    handleError(result.message);
+                }
+            })
+            .catch(error => {
+                handleError(error);
+            });
+        });
+
+        /*
+        const pollTaskStatus = (taskId) => {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/check_task_status/${taskId}`);
+                    const result = await response.json();
+
+                    // Assuming the result contains the count of completed translations
+                    if (result.translated_count !== undefined) {
+                        updateTranslationCount(result.translated_count);  // Update count dynamically
+                    }
+
+                    if (result.status === 'Complete') {
+                        clearInterval(interval);  // Stop polling
+                        hideLoaderTrans();  // Hide loader when task is complete
+                        alert("Operation done successfully!");
+                    } else {
+                        console.log("Task is still processing...");
+                    }
+                } catch (error) {
+                    clearInterval(interval);
+                    hideLoaderTrans();
+                    handleError(error);
+                }
+            }, 3000);  // Poll every 3 seconds
+        };
+         */
+
+        const pollTaskStatus = (taskId) => {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/check_task_status/${taskId}`);
+                    const result = await response.json();
+
+                    // Assuming the result contains the count of completed translations
+                    if (result.translated_count !== undefined) {
+                        updateTranslationCount(result.translated_count);  // Update count dynamically
+                    }
+
+                    if (result.status === 'Complete') {
+                        clearInterval(interval);  // Stop polling
+                        hideLoaderTrans();  // Hide loader
+
+                        // Delay the alert slightly to ensure loader terminates first
+                        setTimeout(() => {
+                            alert("Operation done successfully!");
+                        }, 300);  // Adjust the delay as needed
+                    } else {
+                        console.log("Task is still processing...");
+                    }
+                } catch (error) {
+                    clearInterval(interval);
+                    hideLoaderTrans();
+                    handleError(error);
+                }
+            }, 5000);  // Poll every 5 seconds
+        };
+
+
+        // Update the translation count in the loader
+        const updateTranslationCount = (count) => {
+            const countElement = document.getElementById('translationCount');
+            countElement.textContent = count;  // Set the count in the span
+        };
+
+        // Error handler function
+        const handleError = (error) => {
+            const substring1 = "is not valid JSON";
+            const substring2 = "Unexpected token";
+            if (error.includes(substring1) || error.includes(substring2)) {
+                alert("May be Internet Issues, Please check!, Error: " + error);
+            } else {
+                alert("Error: " + error);
+            }
+        };
+
+
+
+    /* Rename column,Type conversion & Parsing date  */
+    document.getElementById('renameTypeConvertDateParsingButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('handle_rename_type_conversion_date_parsing');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/handle_rename_type_conversion_date_parsing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+    /* State & city filter */
+    document.getElementById('stateAndCityButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('handle_state_and_city');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/handle_state_and_city', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+    /* remove data */
+    document.getElementById('removeDataButton').addEventListener('click', function() {
+        // Collect form data
+        showLoader()
+        const form = document.getElementById('remove_data');
+        const formData = new FormData(form);
+
+        // Create an object from FormData
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Send data using fetch API
+        fetch('/remove_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+
+
+
+});
+
+
+
+</script>
+    <script>
+        function showDropdown(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideDropdown(id) {
+            // Use a timeout to allow click events to be processed
+            setTimeout(() => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            }, 200); // Adjust timeout if needed
+        }
+
+        function selectOption(option, inputId) {
+            document.getElementById(inputId).value = option;
+            hideDropdown(inputId + '-options');
+        }
+
+        // Close dropdown if clicking outside of it
+        document.addEventListener('click', function (event) {
+            const isClickInside = event.target.closest('.select-container');
+            if (!isClickInside) {
+                document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+
+        /* new added*/
+
+    </script>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        function showLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "flex";
+            }
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = "none";
+            }
+        }
+
+        $(document).ready(function() {
+            const showButton = document.getElementById('showButton');
+            const dataTableSection = document.getElementById('dataTableSection');
+            const dataTableContainer = document.getElementById('dataTableContainer');
+
+            let isTableVisible = false; // Track visibility state
+
+            showButton.addEventListener('click', function() {
+                showLoader()
+                if (isTableVisible) {
+                    dataTableSection.classList.add('hidden');
+                    showButton.textContent = 'Show';
+                    isTableVisible = false;
+                    hideLoader()
+                } else {
+                    fetch('/showdata')
+                        .then(response => response.json())
+                        .then(data => {
+
+                            if (data.len_is_zero) {
+                                hideLoader(); // Hide loader
+                                setTimeout(function() {
+                                    alert("No data available to display!"); // Show alert for empty data
+                                }, 100); // Delay of 100 milliseconds
+                                return; // Stop further execution if no data
+                            }
+
+                            dataTableContainer.innerHTML = data.data_table;
+                            $('#dataTableContainer table').DataTable({
+                                "pagingType": "full_numbers",
+                                "pageLength": 5,
+                                "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                            });
+                            dataTableSection.classList.remove('hidden');
+                            showButton.textContent = 'Hide';
+                            isTableVisible = true;
+                            hideLoader()
+                        });
+                }
+            });
+
+            document.getElementById('downloadCsv').addEventListener('click', function() {
+                window.location.href = '/download/csv';
+            });
+
+            document.getElementById('downloadXlsx').addEventListener('click', function() {
+                window.location.href = '/download/xlsx';
+            });
+        });
+    </script>
+    <!-- new code -->
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var textarea = document.getElementById('comments');
+
+            textarea.addEventListener('focus', function() {
+                this.style.height = '200px'; // Increase height on focus
+                this.style.width = '300px'; // Increase height on focus
+            });
+
+            textarea.addEventListener('blur', function() {
+                this.style.height = '40px'; // Reset height when focus is lost
+                this.style.width = '220px'; // Reset height when focus is lost
+            });
+        });
+    </script>
+    <!-- for email textarea -->
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('applyAlgo').addEventListener('click', function() {
+        // Send AJAX request to Flask backend
+        fetch('/handle_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'apply_domain_algo'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Set the value of the textarea
+            if (data.status==='error'){
+                alert(data.message)
+            } else {
+                //alert(data)
+                sessionStorage.setItem("response", JSON.stringify(data.dataset));
+                const myData = sessionStorage.getItem("response");
+                document.getElementById('comments').value = myData;
+            }
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+        alert(error)});
+    });
+});
+</script>
+
+    <!-- input for handling email-->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('applyAlgo').addEventListener('click', function() {
+        // Get the values from the dropdown and input field
+        const dropdownValue = document.getElementById('dropdown4').value;
+        const emailDomainValue = document.getElementById('email_domain_input').value;
+
+        // Debugging: Log values to the console
+        //console.log('Dropdown value-1:', dropdownValue);
+        //console.log('Email domain value-2:', emailDomainValue);
+
+        // Send AJAX request to Flask backend
+        fetch('/handle_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                dropdown: dropdownValue,
+                email_domain_input: emailDomainValue
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle response if needed
+            //console.log('Response-main:', data);
+            if (data.status==='success') {
+                sessionStorage.setItem("response", JSON.stringify(data.dataset));
+            } else{
+                alert(data.message)
+            }
+        })
+        .catch(error => {
+            //console.error('Error:', error);
+            alert(error)
+        });
+    });
+});
+
+</script>
+<!-- email ok button -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var loader = document.getElementById("loader");
+    function showLoader() {
+        loader.style.display = "flex";
+    }
+
+    function hideLoader() {
+        loader.style.display = "none";
+    }
+    document.getElementById('email_ok').addEventListener('click', function() {
+        showLoader()
+        // Get the values from the dropdown and input field
+        const dropdownValue = document.getElementById('dropdown4').value;
+        const emailDomainValue = document.getElementById('comments').value;
+
+        // Debugging: Log values to the console
+        //console.log('Dropdown value-1:');
+        //console.log('Email domain value-2:');
+
+        // Send AJAX request to Flask backend
+        fetch('/replace_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                dropdown: dropdownValue,
+                comments: emailDomainValue
+            })
+        }).then(response => response.json())
+        .then(result => {
+            // Handle the result from the server
+            //console.log(result);
+            //hideLoader()
+            if (result.status==='error'){
+                alert(result.message)
+            }
+            // You might want to update the UI or show a message here
+        }).catch(error => {
+            //console.error('Error:', error);
+            //hideLoader()
+            alert(error)
+            // Handle any errors
+        })
+        .finally(() => {
+            // Ensure the loader is hidden after request completes (success or error)
+            hideLoader();
+        });
+    });
+});
+
+</script>
+<script>
+    function selectCitiesName(stateName) {
+            document.getElementById('dropdown_list_state').value = stateName;
+            document.getElementById('dropdown_list_city').value = 'Select option'; // Reset file name dropdown
+
+            fetch('/get_cities', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'stateName': stateName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const fileOptions = document.getElementById('cities-options');
+                fileOptions.innerHTML = ''; // Clear previous options
+                data.cities.forEach(city => {
+                    const li = document.createElement('li');
+                    li.textContent = city;
+                    li.onclick = () => selectOption(city, 'dropdown_list_city');
+                    fileOptions.appendChild(li);
+                });
+            });
+        }
+
+</script>
+<script>
+    function selectOptions(option, dropdownId, inputBoxId) {
+            const dropdownInput = document.getElementById(dropdownId);
+            const inputBox = document.getElementById(inputBoxId);
+            const currentText = inputBox.value.split(', ').map(s => s.trim());
+
+            // Update the input field value
+            dropdownInput.value = option;
+
+            // Append the selected option to the textarea
+            if (!currentText.includes(option)) {
+                if (inputBox.value) {
+                    inputBox.value += `, ${option}`;
+                } else {
+                    inputBox.value = option;
+                }
+            }
+
+            hideDropdown(`${dropdownId}-options`);
+        }
+
+        document.addEventListener('click', function (event) {
+            const isClickInside = event.target.closest('.select-container');
+            if (!isClickInside) {
+                document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+</script>
+
+<!-- new code added here-->
+
+<script>
+    /*
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchColumns();  // Fetch columns when the page loads
+    });
+
+    function fetchColumns() {
+        fetch('/get_columns')
+        .then(response => response.json())
+        .then(data => {
+            // Update all dropdowns dynamically
+            document.querySelectorAll('.dropdown-options-list').forEach(dropdownList => {
+                const dropdownId = dropdownList.getAttribute('data-dropdown');
+                dropdownList.innerHTML = ''; // Clear existing options
+
+                data.forEach(column => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = column;
+                    listItem.onclick = function() {
+                        selectOption(column, dropdownId);
+                    };
+                    dropdownList.appendChild(listItem);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching columns:', error));
+    }*/
+</script>
+
+
+
+
+</body>
+
+</html>

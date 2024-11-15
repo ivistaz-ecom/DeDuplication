@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html   lang="en" >
+
+<head>
+	{% include 'partials/head.html' %}
+	<title>Database Connection</title>
+	 <style>
+        .flash {
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 5px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+	<style>
+        /* Container for the custom dropdown */
+.select-container {
+    position: relative;
+    width: 200px; /* Width of the dropdown */
+}
+
+
+/* Dropdown options container */
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%; /* Match the width of the input */
+    max-height: 80px; /* Adjust to show options comfortably */
+    overflow-y: auto; /* Scroll if there are more options */
+    background-color: white; /* White background */
+    color: black; /* Black text */
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: none; /* Hidden by default */
+    z-index: 10; /* Ensure it appears above other elements */
+}
+
+/* Style for list items */
+.dropdown-options ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown-options li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.dropdown-options li:hover {
+    background-color: #f0f0f0; /* Highlight on hover */
+}
+
+.selected-option {
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 1px;
+    background-color: white; /* White background for the input */
+    color: black; /* Black text for the input */
+    width: 100%; /* Ensure the input takes full width of container */
+    box-sizing: border-box; /* Ensure padding and border are included in width */
+}
+
+
+    </style>
+	<style>
+        /* Optional: Style to visually indicate it's not editable */
+        .readonly-input {
+            background-color: #f0f0f0; /* Light gray background */
+            cursor: not-allowed; /* Change cursor to indicate it's not editable */
+        }
+    </style>
+</head>
+
+<body class=" bg-surface">
+
+	<main>
+		<!--start the project-->
+		<div id="main-wrapper" class=" flex p-5 xl:pr-0 min-h-screen">
+			<aside id="application-sidebar-brand"
+				class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full  transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0  w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar   transition-all duration-300" >
+				{% include 'partials/sidebar.html' %}
+			</aside>
+			<div class=" w-full page-wrapper xl:px-6 px-0 ">
+
+				<!-- Main Content -->
+				<main class="h-full  max-w-full">
+					<div class="container full-container p-0 flex flex-col gap-6">
+					<!--  Header Start -->
+				<header class=" bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+					{% include 'partials/header.html' %}
+
+				</header>
+				<!--  Header End -->
+
+                        <div class="card mt-5">
+							<div class="card-body flex flex-col gap-6">
+								<h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-database ps-2 text-4xl"></i>Database Connection Settings</h6>
+								<!-- adding flash message -->
+								{% with messages = get_flashed_messages(with_categories=True) %}
+									{% if messages %}
+										{% for category, message in messages %}
+											<div class="flash {{ category }}">{{ message }}</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
+								<div class="card">
+									<section class="flex flex-col items-center pt-6">
+									  <div
+										class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+										<div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+										  <form class="space-y-4 md:space-y-6 flex flex-col items-center mx-2 md:mx-8 lg:mx-16" method="POST" action="/database_edit">
+											  <div class="w-full max-w-md">
+                                                        <label for="connection_string" class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white">Connection String</label>
+                                                        <div class="flex">
+                                                            {% if data %}
+                                                            <input type="password" name="connection_string" class="connectionString bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-l-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{data['database_connection']}}" readonly>
+                                                            {% else %}
+                                                            <input type="password" name="connection_string" class="connectionString bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-l-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="database connection string" readonly>
+                                                            {% endif %}
+                                                            <button type="button" class="toggleButton bg-blue-600 text-white font-semibold py-2 px-4 rounded-r-md hover:bg-blue-700 transition duration-200">Edit</button>
+                                                        </div>
+                                                    </div>
+
+
+
+											  <!-- Form Field 2 -->
+											  <div class="w-full max-w-md">
+												<label for="database_name" class="py-2 block mb-2 text-lg font-bold  text-gray-900 dark:text-white">Database</label>
+												  {% if data %}
+												  		<input type="text" name="database_name" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ data['database_name'] }}" required>
+												  {% else %}
+												  		<input type="text" name="database_name" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Database Name" required>
+												  {% endif%}
+
+											  </div>
+
+											  <div class="flex items-start">
+												<!-- Form Field 2: Select Action -->
+												<div class="select-container flex flex-col w-full max-w-md mr-4">
+													<label for="collection_handle" class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white">Select Collection</label>
+													<div class="relative">
+														<!-- Custom Dropdown -->
+														<div class="dropdown-options" id="collection_handle-options">
+															<ul>
+																<li onclick="selectOption('Walmart Vriddhi Lead', 'collection_handle')">Walmart Vriddhi</li>
+																<li onclick="selectOption('Business Catalyst', 'collection_handle')">Business Catalyst</li>
+																<li onclick="selectOption('Walmart Market Place', 'collection_handle')">Walmart Market Place</li>
+																<li onclick="selectOption('None', 'collection_handle')">None</li>
+															</ul>
+														</div>
+														<input id="collection_handle" name="collection_handle" class="selected-option bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onfocus="showDropdown('collection_handle-options')" onblur="hideDropdown('collection_handle-options')" readonly value="None" />
+													</div>
+												</div>
+												<!-- Form Field 1: Collection -->
+												<div class="w-64">
+													<label for="collection" class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white">Collection Name</label>
+													{% if data %}
+														<input type="text" name="collection_name" id="collection" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" style="width: 230px" value="{{ data['collection_name']}}" required>
+													{% else %}
+														<input type="text" name="collection_name" id="collection" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" style="width: 230px" placeholder="Collection Name" required>
+													{% endif %}
+												</div>
+											</div>
+
+											<!-- Form Field 2: Select Action -->
+
+											<div class="flex items-start">
+												<!-- Form Field 2: Select Action -->
+												<div class="select-container flex flex-col w-full max-w-md mr-4">
+													<label for="source_type_handle" class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white">Select platform</label>
+													<div class="relative">
+														<!-- Custom Dropdown -->
+														<div class="dropdown-options" id="source_type_handle-options">
+															<ul>
+																<li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('Website')">Website</li>
+																<li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('Paid')">Paid</li>
+																<li class="cursor-pointer p-2 hover:bg-gray-200" onclick="selectOptions('None')">None</li>
+															</ul>
+														</div>
+														<input id="source_type_handle" name="source_type_handle" class="selected-option bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" onfocus="showDropdown('source_type_handle-options')" onblur="hideDropdown('source_type_handle-options')" readonly value="None" />
+													</div>
+												</div>
+												<!-- Form Field 1: Collection -->
+												<div class="w-64">
+													<label for="source_type" class="py-2 block mb-2 text-lg font-bold text-gray-900 dark:text-white">Selected platform</label>
+													{% if data %}
+														<input type="text" name="source_type_name" id="source_type" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" style="width: 230px" value="{{ data['source_type']}}">
+													{% else %}
+														<input type="text" name="source_type_name" id="source_type" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" style="width: 230px" placeholder="Collection Name">
+													{% endif %}
+												</div>
+											</div>
+
+											  <!-- Buttons -->
+											  <div class="flex justify-center gap-4 mt-4 mb-4 w-full max-w-md">
+												<a href="{{ url_for('showDashboard') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-sm text-sm px-6 py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Prev</a>
+												<button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-sm text-sm px-6 py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Edit</button>
+												<a href="{{ url_for('fileupload') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-sm text-sm px-6 py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out">Next</a>
+											  </div>
+											</form>
+
+										</div>
+									  </div>
+									</section>
+
+								</div>
+
+							</div>
+						</div>
+					</div>
+
+
+				</main>
+				<!-- Main Content End -->
+
+			</div>
+		</div>
+		<!--end of project-->
+	</main>
+
+	{% include "partials/scripts.html" %}
+
+<script>
+    function showDropdown(id) {
+        document.getElementById(id).style.display = 'block';
+    }
+
+    function hideDropdown(id) {
+        // Use a timeout to allow click events to be processed
+        setTimeout(() => {
+            const dropdown = document.getElementById(id);
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }, 200); // Adjust timeout if needed
+    }
+
+    function selectOption(option) {
+        // Update the collection_handle input field
+        document.getElementById('collection_handle').value = option;
+
+        // Update the collection input field based on the selected option
+        if (option === 'Walmart Vriddhi Lead') {
+            document.getElementById('collection').value = 'walmart_vriddhi';
+        } else if (option === 'Business Catalyst') {
+            document.getElementById('collection').value = 'business_catalyst';
+        } else if (option === 'Walmart Market Place') {
+            document.getElementById('collection').value = 'walmart_market_place';
+        }
+		else {
+            // Handle cases where the option does not match expected values
+            document.getElementById('collection').value = ''; // Clear or set to a default value
+        }
+
+        // Hide the dropdown options
+        hideDropdown('collection_handle-options');
+    }
+
+	function selectOptions(option) {
+    const inputHandle = document.getElementById('source_type_handle');
+    const inputField = document.getElementById('source_type');
+
+    // Set the selected option text in the input field
+    inputHandle.value = option;
+
+    // Set the corresponding value in the collection input field
+    if (option === 'Website' || option === 'Paid') {
+        inputField.value = option;
+    } else {
+        inputField.value = ''; // Clear or set a default value if needed
+    }
+
+    // Hide the dropdown after selection
+    hideDropdown('source_type_handle-options');
+}
+
+    // Close dropdown if clicking outside of it
+    document.addEventListener('click', function (event) {
+        const isClickInside = event.target.closest('.select-container');
+        if (!isClickInside) {
+            document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+        }
+    });
+</script>
+
+<script>
+	        // Toggle input field for connection string
+        const toggleButton = document.querySelector('.toggleButton');
+        const inputField = document.querySelector('.connectionString');
+		const usertype = "{{ usertype }}";
+
+        toggleButton.addEventListener('click', () => {
+			if (usertype==='admin') {
+				if (inputField.readOnly) {
+					inputField.type = 'text'; // Show the text
+					inputField.readOnly = false; // Make the input editable
+					inputField.classList.remove('readonly-input'); // Optionally remove any styles
+					toggleButton.textContent = 'Save'; // Change button text to 'Save'
+				} else {
+					inputField.type = 'password'; // Hide the text
+					inputField.readOnly = true; // Make the input readonly
+					inputField.classList.add('readonly-input'); // Optionally add styles
+					toggleButton.textContent = 'Edit'; // Change button text to 'Edit'
+				}
+			}
+        });
+</script>
+
+</body>
+
+</html>

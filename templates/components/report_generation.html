@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'partials/head.html' %}
+    <title>Export Data</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        /* Custom CSS for dropdown visibility */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 30px; /* Space for the arrow */
+            background: url('https://cdn.datatables.net/1.11.5/images/sort_asc.png') no-repeat right center;
+            background-size: 20px; /* Adjust size of the arrow */
+        }
+
+        .select-container {
+            position: relative;
+            flex: 1; /* Allow the container to grow and fill available space */
+            min-width: 300px; /* Ensure minimum width */
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%; /* Match the width of the input */
+            max-height: 80px; /* Adjust to show options comfortably */
+            overflow-y: auto; /* Scroll if there are more options */
+            background-color: white; /* White background */
+            color: black; /* Black text */
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none; /* Hidden by default */
+            z-index: 10; /* Ensure it appears above other elements */
+        }
+
+        .dropdown-options ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown-options li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options li:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+
+        .selected-option {
+            cursor: pointer;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px; /* Make the border rounded */
+            background-color: white; /* White background for the input */
+            color: black; /* Black text for the input */
+            width: 100%; /* Ensure the input takes full width of container */
+            box-sizing: border-box; /* Ensure padding and border are included in width */
+        }
+
+        /* DataTable styles */
+        #dataTableSection {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 6rem); /* Adjust height to occupy full screen minus padding */
+            overflow: auto; /* Scroll if needed */
+        }
+
+        /* Custom CSS to align DataTable column headers to the left */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead table thead th {
+            text-align: left !important; /* Ensure headers are aligned to the left */
+        }
+
+        /* Optional: Align table body cells to the left if needed */
+        .dataTables_wrapper .dataTables_scroll .dataTables_scrollBody table tbody td {
+            text-align: left !important; /* Ensure table cells are aligned to the left */
+        }
+
+        /* new added */
+
+         /* DataTable Search Input Container */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 10px; /* Space between search input and table heading */
+            position: sticky; /* Make header sticky */
+
+        }
+
+        /* Data Table Section */
+        #dataTableSection {
+            display: none;
+            width: 100%;
+            max-width: 1000px; /* Set a maximum width for the section (adjust as needed) */
+            margin: 0 auto; /* Center the section horizontally */
+            overflow: hidden; /* Prevent section from expanding beyond its container */
+        }
+
+        /* Data Table Container */
+        #dataTableContainer {
+            max-width: 100%; /* Ensure it doesn't exceed the section width */
+            max-height: 72vh; /* Adjust maximum height as needed */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+            white-space: nowrap; /* Prevent text wrapping */
+            margin: 0 auto; /* Center the container horizontally */
+        }
+
+        /* Table Layout */
+        #dataTableContainer table {
+            width: auto; /* Allow table to determine its width based on content */
+            min-width: 100%; /* Ensure the table takes up at least the container's width */
+            border-collapse: collapse; /* Ensure borders collapse for proper layout */
+        }
+
+        /* Table Header and Cell Styling */
+        #dataTableContainer th,
+        #dataTableContainer td {
+            padding-left: 30px; /* Adjust padding for better spacing */
+            padding-right: 30px;
+            text-align: left; /* Align text to the left */
+            white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for clarity */
+            margin-left: 16px; /* Margin from the left */
+            margin-right: 16px; /* Margin from the right */
+        }
+
+        /* Fix header row on scroll */
+        #dataTableContainer th {
+            background-color: #f1f1f1; /* Background color for header */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+    </style>
+    <style>
+        /* Modal styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* On top of other elements */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%; /* Adjusted width to one-third of the current size */
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Loader styling */
+        .loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+            z-index: 1000; /* On top of other elements */
+            text-align: center;
+            padding-top: 20%;
+            padding-left: 50%;
+        }
+
+        .loader .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.6/xlsx.full.min.js"></script>
+
+
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>--> <!-- new added -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <!-- Sidebar and other layout elements -->
+            <div class="w-full page-wrapper xl:px-6 px-0">
+
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+
+                        <div class="card mt-5">
+                            <div class="card-body flex flex-col gap-6">
+                                <h6 class="text-2xl text-gray-500 font-bold text-center"><i class="ti ti-file ps-2 text-4xl"></i>Report generation</h6>
+                                <div class="card">
+                                    <section class="flex flex-col items-center pt-6">
+                                        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                                            <div class="p-6 space-y-4 md:space-y-6 sm:p-8 py-3">
+                                                <form id="dataForm" class="space-y-4 md:space-y-6 flex flex-col items-center mx-2 md:mx-8 lg:mx-16" method="POST" >
+                                                    <!-- Row for File Type Input and File Name Input -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown1" class="block text-gray-700 font-bold mb-1">Select file type</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown1-options">
+                                                                    <ul>
+                                                                        <li onclick="selectFileType('Unique data')">Unique data</li>
+                                                                        <li onclick="selectFileType('Duplicate data')">Duplicate data</li>
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown1"
+                                                                    name="file_type"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown1-options')"
+                                                                    onblur="hideDropdown('dropdown1-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <!-- File Name Input -->
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown2" class="block text-gray-700 font-bold mb-1">Select file name</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown2-options">
+                                                                    <ul id="file-options">
+                                                                        <!-- Options will be populated here -->
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown2"
+                                                                    name="file_name"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown2-options')"
+                                                                    onblur="hideDropdown('dropdown2-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" id="ok_button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-3 mt-6 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Ok</button>
+                                                    </div>
+                                                    <!-- input field -->
+                                                    <!-- rename column -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown3" class="block text-gray-700 font-bold mb-1">Select column name</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown3-options">
+                                                                    <ul id="dropdown-options-report-list">
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown3"
+                                                                    name="dropdown3"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown3-options')"
+                                                                    onblur="hideDropdown('dropdown3-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex flex-col">
+                                                                <label for="report_input1" class="block text-gray-700 font-bold mb-1">column new name</label>
+                                                                <input style="width: 270px"
+                                                                    type="text"
+                                                                    id="new_column_name"
+                                                                    name="new_column_name"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                />
+                                                        </div>
+                                                        <button type="button" id="rename_button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-3 mt-6 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Rename</button>
+                                                    </div>
+
+                                                    <!-- column rearrangement -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown3" class="block text-gray-700 font-bold mb-1">Select column name</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown4-options">
+                                                                    <ul id="dropdown-options-report-rearrange-list">
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown4"
+                                                                    name="dropdown4"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown4-options')"
+                                                                    onblur="hideDropdown('dropdown4-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex flex-col">
+                                                                <label for="report_input1" class="block text-gray-700 font-bold mb-1">Re-arranged columns format</label>
+                                                                <input style="width: 250px"
+                                                                    type="text"
+                                                                    id="list_of_all_column_names_to_rearrange"
+                                                                    name="list_of_all_column_names_to_rearrange"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                />
+                                                        </div>
+                                                        <button type="button" id="rearrange_button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-3 mt-6 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Re-arrange</button>
+                                                    </div>
+
+                                                    <!-- remove columns from dataset -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+
+                                                        <div class="select-container flex flex-col">
+                                                            <label for="dropdown3" class="block text-gray-700 font-bold mb-1">Select column name</label>
+                                                            <div class="relative">
+                                                                <!-- Custom Dropdown -->
+                                                                <div class="dropdown-options" id="dropdown5-options">
+                                                                    <ul id="dropdown-options-report-remove-list">
+
+                                                                    </ul>
+                                                                </div>
+                                                                <input
+                                                                    id="dropdown5"
+                                                                    name="dropdown5"
+                                                                    class="selected-option"
+                                                                    onfocus="showDropdown('dropdown5-options')"
+                                                                    onblur="hideDropdown('dropdown5-options')"
+                                                                    readonly
+                                                                    value="Select option"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex flex-col">
+                                                                <label for="report_input1" class="block text-gray-700 font-bold mb-1">Removing columns name</label>
+                                                                <input style="width: 270px"
+                                                                    type="text"
+                                                                    id="list_of_all_column_names_to_remove"
+                                                                    name="list_of_all_column_names_to_remove"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                />
+                                                        </div>
+                                                        <button type="button" id="remove_button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-3 mt-6 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Remove</button>
+                                                    </div>
+
+
+                                                    <!-- add columns  -->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="flex flex-col w-[300px]">
+                                                                <label for="report_input3" class="block text-gray-700 font-bold mb-1">New column name</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="add_new_column"
+                                                                    name="add_new_column"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                />
+                                                        </div>
+                                                        <div class="flex flex-col w-[300px]">
+                                                                <label for="report_input1" class="block text-gray-700 font-bold mb-1">New column value</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="add_new_column_value"
+                                                                    name="add_new_column_value"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                />
+                                                        </div>
+                                                        <button type="button" id="add_button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-3 mt-6 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Add</button>
+                                                    </div>
+
+                                                    <!-- index adding -->
+
+                                                    <div class="flex flex-wrap items-center gap-6 py-3 input-row">
+                                                        <div class="flex flex-col">
+                                                                <label for="report_input3" class="block text-gray-700 font-bold mb-1">Index column name</label>
+                                                                <input style="width: 320px"
+                                                                    type="text"
+                                                                    id="index_column_name"
+                                                                    name="index_column_name"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value="id"
+                                                                />
+                                                        </div>
+                                                        <div class="flex items-center mt-5 w-[100px]">
+                                                            <input
+                                                                type="checkbox"
+                                                                id="import_index"
+                                                                name="import_index"
+                                                                style="margin-right: 10px;margin-left: 20px;"
+                                                                onchange="handleCheckboxChange(this)"
+                                                            />
+                                                            <label for="set_value_checkbox" class="text-gray-700 font-bold ml-2">Import Index</label>
+                                                        </div>
+                                                        <div class="flex items-center mt-5 w-[100px]">
+                                                            <input
+                                                                type="checkbox"
+                                                                id="mobile_no_digit"
+                                                                name="mobile_no_digit"
+                                                                style="margin-right: 10px;margin-left: 20px;"
+                                                            />
+                                                            <label for="set_value_checkbox" class="text-gray-700 font-bold ml-2">Phone with 10 Digits</label>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="flex flex-col w-[300px]">
+                                                                <label for="report_input3" class="block text-gray-700 font-bold mb-1">Platform column name</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="report_input3"
+                                                                    name="report_input3"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value="platform"
+                                                                />
+                                                        </div>
+                                                        <div class="flex flex-col w-[170px]">
+                                                                <label for="report_input1" class="block text-gray-700 font-bold mb-1">Impressions</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="report_input1"
+                                                                    name="report_input1"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value="0"
+                                                                />
+                                                        </div>
+                                                        <div class="flex flex-col w-[170px]">
+                                                                <label for="report_input2" class="block text-gray-700 font-bold mb-1">Clicks</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="report_input2"
+                                                                    name="report_input2"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value="0"
+                                                                />
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- input field for adding columns -->
+                                                    <!--
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="flex flex-col w-[200px]">
+                                                                <label for="index_column_name" class="block text-gray-700 font-bold mb-1">Index column name</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="index_column_name"
+                                                                    name="index_column_name"
+                                                                    value="FB + Insta"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+
+                                                                />
+                                                        </div>
+                                                        <div class="flex flex-col w-[200px]">
+                                                                <label for="campaign_type" class="block text-gray-700 font-bold mb-1">Campaign type</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="campaign_type"
+                                                                    name="campaign_type"
+                                                                    value="Lead Generation"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+
+                                                                />
+                                                        </div>
+                                                        <div class="flex flex-col w-[200px]">
+                                                                <label for="campaign_column_name" class="block text-gray-700 font-bold mb-1">Campaign column name</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id="campaign_column_name"
+                                                                    name="campaign_column_name"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value="Type"
+                                                                />
+                                                        </div>
+                                                    </div>-->
+                                                    <div class="flex flex-wrap items-center gap-4 py-3 input-row">
+                                                        <div class="flex flex-col">
+                                                                <label for="column_rename" class="block text-gray-700 font-bold mb-1">Rename columns</label>
+                                                                <input style="width: 550px;"
+                                                                    type="text"
+                                                                    id="column_rename"
+                                                                    name="column_rename"
+                                                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white "
+                                                                    value=""
+                                                                />
+                                                        </div>
+                                                        <div class="flex items-center mt-5 w-[100px]">
+                                                            <input
+                                                                type="checkbox"
+                                                                id="set_value_checkbox"
+                                                                name="set_value_checkbox"
+                                                                style="margin-right: 10px;margin-left: 20px;"
+                                                                onclick="toggleValue()"
+                                                            />
+                                                            <label for="set_value_checkbox" class="text-gray-700 font-bold ml-2">Data columns</label>
+                                                        </div>
+                                                        <!--
+                                                        <div class="flex items-center mt-5 w-[100px]">
+                                                            <input
+                                                                type="checkbox"
+                                                                id="report_checkbox"
+                                                                name="report_checkbox"
+                                                                style="margin-right: 10px;margin-left: 20px;"
+                                                                onclick="toggleValue()"
+                                                            />
+                                                            <label for="set_value_checkbox" class="text-gray-700 font-bold ml-2">Report columns</label>
+                                                        </div>-->
+
+                                                    </div>
+                                                    <!-- input field handle -->
+
+                                                    <!-- Row for Buttons -->
+                                                    <!--
+                                                    <div class="flex flex-wrap justify-center gap-4 mt-4 mb-4 w-full max-w-md py-3 button-row">
+                                                        <a href="{{ url_for('index') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex items-center justify-center">Prev</a>
+                                                        <button type="button" id="showButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <button type="button" id="refreshButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Refresh</button>
+                                                        <button type="button" id="reportButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Report</button>
+                                                        <button type="button" id="report_download" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Download</button>
+                                                    </div>
+                                                    -->
+                                                    <div class="flex justify-center gap-4 mt-4 mb-4 w-full max-w-md py-3 button-row">
+                                                        <a href="{{ url_for('index') }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Prev</a>
+                                                        <button type="button" id="showButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Show</button>
+                                                        <button type="button" id="refreshButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0" style="white-space: nowrap;">Reset Columns</button>
+                                                        <button type="button" id="reportButton" data-report="1" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0 reportButton">Report</button>
+                                                        <button type="button" id="report_download" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-6 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md transition-all duration-300 ease-in-out flex-shrink-0">Download</button>
+                                                    </div>
+
+                                                    <!-- second model -->
+                                                    <div id="popup" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 modal" style="padding-top: 60px">
+                                                        <div id="modal-content" class="bg-white border border-black p-6 rounded-lg shadow-lg w-1/3 max-w-md mx-auto py-8">
+                                                            <div id="resultMessage" class="mt-4 text-center text-lg font-bold"></div>
+                                                            <h4 class="text-lg font-bold mb-4 mx-3 text-center">Are you sure you want to generate report?</h4>
+                                                            <div class="flex justify-center" style="gap: 40px;">
+                                                                <button id="generateReportWithoutPlatform" type="button" data-report="2" class="bg-blue-600 text-white py-3 px-6 rounded hover:bg-blue-400 reportButton">Generate</button>
+                                                                <button id="closePopup" type="button" class="prepare_popup_button bg-gray-500 text-white py-3 px-6 rounded hover:bg-red-600">Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <!-- Data Table Section -->
+                                                    <div id="dataTableSection" class="hidden">
+                                                        <div class="w-full mt-6 ">
+                                                            <h2 class="text-xl font-semibold mb-4 text-center">Data Table</h2>
+                                                            <div class="flex justify-between mb-4 px-4">
+                                                                <button id="downloadCsv" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download CSV</button>
+                                                                <button id="downloadXlsx" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md text-sm px-4 py-2 shadow-md transition-all duration-300 ease-in-out">Download XLSX</button>
+                                                            </div>
+                                                        </div>
+                                                        <!-- Data Table Container -->
+                                                        <div id="dataTableContainer" class="w-full px-4"></div>
+                                                    </div>
+
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+
+            </div>
+        </div>
+        <!-- End of project -->
+        <!-- Loader -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Modal -->
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3><b>Status Logs</b></h3>
+                <hr>
+                <div id="modalMessage"></div>
+            </div>
+        </div>
+
+
+    </main>
+
+    {% include "partials/scripts.html" %}
+
+
+    <!-- JavaScript for dropdown functionality -->
+    <script>
+        var modal = document.getElementById("myModal");
+        var modal_second = document.getElementById("popup")
+        var span = document.getElementsByClassName("close")[0];
+
+        // Function to hide the popup
+        document.getElementById('closePopup').addEventListener('click', function() {
+            document.getElementById('popup').style.display = 'none';
+        });
+        function openModal(messages) {
+            var messageHtml = messages.join('<br>');
+            document.getElementById("modalMessage").innerHTML = messageHtml;
+            modal.style.display = "block";
+        }
+
+        /* new added */
+        function openModalSecond(messages) {
+            var messageHtml = messages.join('<br>');
+            document.getElementById("resultMessage").innerHTML = messageHtml;
+            modal_second.style.display = "block";
+        }
+        /* new added end */
+
+        span.onclick = function () {
+                modal.style.display = "none";
+            }
+        function showDropdown(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideDropdown(id) {
+            setTimeout(() => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            }, 200);
+        }
+
+        function selectOption(option, inputId) {
+            document.getElementById(inputId).value = option;
+            hideDropdown(inputId + '-options');
+        }
+
+        function selectFileType(fileType) {
+            document.getElementById('dropdown1').value = fileType;
+            document.getElementById('dropdown2').value = 'Select option'; // Reset file name dropdown
+
+            fetch('/get_files', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'file_type': fileType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const fileOptions = document.getElementById('file-options');
+                fileOptions.innerHTML = ''; // Clear previous options
+                data.files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = file;
+                    li.onclick = () => selectOption(file, 'dropdown2');
+                    fileOptions.appendChild(li);
+                });
+            });
+        }
+
+        document.getElementById('showButton').addEventListener('click', function() {
+            const fileType = document.getElementById('dropdown1').value;
+            const fileName = document.getElementById('dropdown2').value;
+            /*
+            if (fileType === 'Select option' || fileName === 'Select option') {
+                alert('Please select both file type and file name.');
+                return;
+            }*/
+
+            fetch('/datashowReport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'file_type': fileType, 'file_name': fileName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status==="success") {
+                    const dataTableContainer = document.getElementById('dataTableContainer');
+                    dataTableContainer.innerHTML = data.data_table;
+                    $('#dataTableContainer table').DataTable({
+                        "pagingType": "full_numbers",
+                        "pageLength": 5,
+                        "lengthMenu": [5, 10, 25, 50, 100, 500, 1000] // Add 7 to the dropdown options
+                    });
+                    document.getElementById('dataTableSection').style.display = 'block';
+                }
+                else{
+                    alert(data.message)
+                }
+            });
+        });
+        /*
+        document.getElementById('downloadCsv').addEventListener('click', function() {
+            window.location.href = '/download/csv';
+        });
+
+        document.getElementById('downloadXlsx').addEventListener('click', function() {
+            window.location.href = '/download/xlsx';
+        });
+
+         */
+        // Download CSV
+        // Download CSV
+        document.getElementById('downloadCsv').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default behavior (like submitting a form or navigating to a URL)
+
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to CSV format
+            const csvData = convertToCSV(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Cleanup the link element
+        });
+
+        // Download XLSX
+        document.getElementById('downloadXlsx').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default behavior
+
+            // Get data from the DataTable
+            const table = $('#dataTableContainer table').DataTable();
+            const data = table.rows({ filter: 'applied' }).data().toArray(); // Get visible data
+            const headers = table.columns().header().toArray().map(header => header.innerText); // Get column headers
+
+            // Convert to XLSX format
+            const xlsxData = convertToXLSX(headers, data);
+
+            // Create a Blob and download
+            const blob = new Blob([xlsxData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'downloaded_data.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Cleanup the link element
+        });
+
+
+        // Function to convert data to CSV format
+        function convertToCSV(headers, data) {
+            // Combine headers with data
+            const rows = [headers, ...data.map(row => Object.values(row))];
+            return rows.map(row => row.join(',')).join('\n');
+        }
+
+        // Function to convert data to XLSX format (using XLSX.js library)
+        function convertToXLSX(headers, data) {
+            const workbook = XLSX.utils.book_new();
+
+            // Combine headers with data
+            const jsonData = data.map((row, index) => {
+                const rowData = {};
+                headers.forEach((header, i) => {
+                    rowData[header] = row[i];
+                });
+                return rowData;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(jsonData, { header: headers });
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+            // Generate XLSX file as binary string
+            const xlsxData = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+
+            // Convert binary string to array buffer
+            const buffer = new ArrayBuffer(xlsxData.length);
+            const view = new Uint8Array(buffer);
+            for (let i = 0; i < xlsxData.length; ++i) {
+                view[i] = xlsxData.charCodeAt(i) & 0xFF;
+            }
+            alert("xlsx")
+            return buffer;
+        }
+
+
+
+        // Close dropdown if clicking outside of it
+        document.addEventListener('click', function (event) {
+            const isClickInside = event.target.closest('.select-container');
+            if (!isClickInside) {
+                document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+
+        // align datatable column towards left
+        $(document).ready(function() {
+    $('#dataTableContainer table').DataTable({
+        "pagingType": "full_numbers",
+        "pageLength": 5,
+        "lengthMenu": [5, 10, 25, 50, 100, 500, 1000], // Add 7 to the dropdown options
+        "drawCallback": function(settings) {
+            // Force align headers to the left after DataTable is drawn
+            $('#dataTableContainer table thead th').css('text-align', 'left');
+            $('#dataTableContainer table tbody td').css('text-align', 'left');
+        }
+    });
+});
+    </script>
+    <script>
+        /* handle downloading the report*/
+        document.getElementById('report_download').addEventListener('click', function() {
+            window.location.href = '/report_download';
+        });
+    </script>
+    <script>
+    // Function to show the loader
+    function showLoader() {
+        document.getElementById('loader').style.display = 'flex';
+    }
+
+    // Function to hide the loader
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+    //document.getElementById('reportButton').addEventListener('click', function() {
+    //document.querySelector('.reportButton').addEventListener('click', function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.reportButton').forEach(function (button) {
+            button.addEventListener('click', function() {
+                /*new code added */
+                var reportValue = this.getAttribute('data-report');
+                /* new code added end */
+                var formData = new FormData(document.getElementById('dataForm'));
+                formData.append('report_type', reportValue);
+                showLoader()
+                // Make an AJAX request to the Flask server
+                fetch('/report_generation', {
+                    method: 'POST',
+                    body: formData,
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            openModal(["Report generated successfully!"]);
+                            hideLoader()
+                            //alert(data.message);  // Show success message
+
+                            // Optionally, you can perform additional actions like showing the data table
+                        } else {
+                            hideLoader()
+                            //openModal([data.message]);
+                            openModalSecond([data.message])
+                        }
+                    })
+                    .catch(error => {
+                        //console.error('Error:', error);
+                        hideLoader()
+                        alert(error + "An error occurred while generating the report.");
+
+                    });
+            });
+        });
+    });
+</script>
+
+    <script>
+        function toggleValue() {
+
+    const checkbox = document.getElementById('set_value_checkbox');
+    const inputField = document.getElementById('column_rename');
+    var formData = new FormData(document.getElementById('dataForm'));
+
+    if (checkbox.checked) {
+        // Make an AJAX POST call to Flask to get the value from the file
+        fetch('/getReportColumns', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                inputField.value = data.column_names;
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        inputField.value = "";
+    }
+}
+
+        /*
+    function toggleValue() {
+        const checkbox = document.getElementById('set_value_checkbox');
+        const inputField = document.getElementById('column_rename');
+        if (checkbox.checked) {
+            inputField.value = "FB + Insta,Type,Source,Name of the Business,Owner's Name,Business Sector,State,Headquarter District,Owner's Email ID,Owner's Phone Number"; // Replace "Your Value" with the desired value
+        } else {
+            inputField.value = "";
+        }
+    }*/
+
+</script>
+    <script>
+        function selectColumnName(column_name, dropdownId) {
+            document.getElementById(dropdownId).value = column_name;
+            if (dropdownId==="dropdown4" ){
+                let inputField = document.getElementById('list_of_all_column_names_to_rearrange');
+                let currentValue = inputField.value.trim();
+                // Split the current value into an array by comma and remove empty entries
+                let columns = currentValue ? currentValue.split(',').map(item => item.trim()) : [];
+                if (!columns.includes(column_name)) {
+                    columns.push(column_name); // Add the new column
+                    inputField.value = columns.join(', '); // Join the columns back with commas
+                }
+            }
+            if (dropdownId==="dropdown5"){  //list_of_all_column_names_to_remove
+                let inputField = document.getElementById('list_of_all_column_names_to_remove');
+                let currentValue = inputField.value.trim();
+                // Split the current value into an array by comma and remove empty entries
+                let columns = currentValue ? currentValue.split(',').map(item => item.trim()) : [];
+                if (!columns.includes(column_name)) {
+                    columns.push(column_name); // Add the new column
+                    inputField.value = columns.join(', '); // Join the columns back with commas
+                }
+            }
+            hideDropdown(dropdownId + '-options');
+        }
+        /*
+       function selectColumnName(column_name) {
+           document.getElementById('dropdown3').value = column_name;
+           hideDropdown('dropdown3' + '-options');
+       }*/
+    </script>
+    <script>
+        document.getElementById('ok_button').addEventListener('click', function () {
+                //showLoader()
+                const fileType = document.getElementById('dropdown1').value;
+                const fileName = document.getElementById('dropdown2').value;
+
+                fetch('/getItemsReport', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({'file_type': fileType, 'file_name': fileName})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            const rename_dropdownList = document.getElementById('dropdown-options-report-list');
+                            const rearrange_dropdownList = document.getElementById('dropdown-options-report-rearrange-list');
+                            const remove_dropdownList = document.getElementById('dropdown-options-report-remove-list');
+                            rename_dropdownList.innerHTML = ''; // Clear existing options
+                            rearrange_dropdownList.innerHTML = ''; // Clear existing options
+                            remove_dropdownList.innerHTML = ''; // Clear existing options
+                            //dropdown for rename column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown3');
+                                rename_dropdownList.appendChild(li);
+                            });
+                            //dropdown for re-arrange column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown4');
+                                rearrange_dropdownList.appendChild(li);
+                            });
+                            //dropdown for remove column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown5');
+                                remove_dropdownList.appendChild(li);
+                            });
+                        } else {
+                            throw new Error(data.message);
+                        }
+
+                        //hideLoader()
+                    })
+                    .catch(error => {
+                        /*
+                        //console.error('Error fetching items:', error);
+                        hideLoader()
+                        var messages = [
+                            error.message // Display the actual error message
+                        ];
+                        openModal(messages); // Ensure this function is defined
+
+                         */
+                        alert(error)
+                    });
+            });
+        /* rename column  */
+        document.getElementById('rename_button').addEventListener('click', function () {
+                //showLoader()
+                const old_column = document.getElementById('dropdown3').value;
+                const new_column = document.getElementById('new_column_name').value;
+
+                fetch('/reportColumnRename', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({'old_column': old_column, 'new_column': new_column})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            alert("successfully renamed!")
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert(error)
+                    });
+            });
+
+        /* rearrange columns */
+        document.getElementById('rearrange_button').addEventListener('click', function () {
+                //showLoader()
+                const list_of_all_column_names_to_rearrange = document.getElementById('list_of_all_column_names_to_rearrange').value;
+                fetch('/RearrangeReportColumns', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({"list_of_all_column_names_to_rearrange": list_of_all_column_names_to_rearrange})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            alert("successfully re-arranged!")
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert(error)
+                    });
+            });
+
+        /* remove column */
+        document.getElementById('remove_button').addEventListener('click', function () {
+                //showLoader()
+                const list_of_all_column_names_to_remove = document.getElementById('list_of_all_column_names_to_remove').value;
+                fetch('/RemoveReportColumns', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({"list_of_all_column_names_to_remove": list_of_all_column_names_to_remove})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            alert("successfully removed!")
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert(error)
+                    });
+            });
+
+        /* add column */
+
+        document.getElementById('add_button').addEventListener('click', function () {
+                //showLoader()
+                const add_new_column = document.getElementById('add_new_column').value;
+                const add_new_column_value = document.getElementById('add_new_column_value').value;
+
+                fetch('/addNewColumn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({'add_new_column': add_new_column, 'add_new_column_value': add_new_column_value})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            alert("successfully added!")
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert(error)
+                    });
+            });
+
+        /* add index */
+        function handleCheckboxChange(checkbox) {
+            const index_column_name = document.getElementById('index_column_name').value;
+            const isChecked = checkbox.checked;
+            if (isChecked) {
+                fetch('/addIndexColumn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({"index_column_name": index_column_name, "import_index": isChecked})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Handle the response from Flask
+                        if (data.status === 'success') {
+                            alert("successfully index added!")
+                        } else {
+                            alert(data.message)
+                        }
+                    })
+                    .catch((error) => {
+                        alert(error)
+                    });
+            }
+        }
+
+        /* refresh  button*/
+        document.getElementById('refreshButton').addEventListener('click', function () {
+                fetch('/getItemsReportRefresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            const rename_dropdownList = document.getElementById('dropdown-options-report-list');
+                            const rearrange_dropdownList = document.getElementById('dropdown-options-report-rearrange-list');
+                            const remove_dropdownList = document.getElementById('dropdown-options-report-remove-list');
+                            rename_dropdownList.innerHTML = ''; // Clear existing options
+                            rearrange_dropdownList.innerHTML = ''; // Clear existing options
+                            remove_dropdownList.innerHTML = ''; // Clear existing options
+                            //dropdown for rename column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown3');
+                                rename_dropdownList.appendChild(li);
+                            });
+                            //dropdown for re-arrange column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown4');
+                                rearrange_dropdownList.appendChild(li);
+                            });
+                            //dropdown for remove column
+                            data.items.forEach(item => {
+                                const li = document.createElement('li');
+                                li.className = 'cursor-pointer p-2 hover:bg-gray-200';
+                                li.textContent = item;
+                                li.onclick = () => selectColumnName(item,'dropdown5');
+                                remove_dropdownList.appendChild(li);
+                            });
+                            alert("Dropdown columns got updated!")
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert(error)
+                    });
+            });
+
+    </script>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+</body>
+</html>

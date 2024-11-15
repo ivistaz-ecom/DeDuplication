@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include 'partials/head.html' %}
+    <style>
+        /* Style for the modal backdrop */
+        #dialogModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            z-index: 1000; /* Ensures it's above other content */
+            display: flex; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+        }
+
+        /* Style for the modal content */
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            width: 80%;
+            max-width: 500px; /* Limit max width */
+            position: relative;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        /* Style for the close (cross) button */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        /* Style for the error label */
+        .error-label {
+            color: red;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        /* Style for the message inside the modal */
+        .message {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* Style for the buttons */
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+
+        .prev-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .prev-btn:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+</head>
+
+<body class="bg-surface">
+    <main>
+        <!-- Start the project -->
+        <div id="main-wrapper" class="flex p-5 xl:pr-0 min-h-screen">
+            <aside id="application-sidebar-brand"
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-5 xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                {% include 'partials/sidebar.html' %}
+            </aside>
+            <div class="w-full page-wrapper xl:px-6 px-0">
+                <!-- Main Content -->
+                <main class="h-full max-w-full">
+                    <div class="container full-container p-0 flex flex-col gap-6">
+                        <!-- Header Start -->
+                        <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
+                            {% include 'partials/header.html' %}
+                        </header>
+                        <!-- Header End -->
+                        <div class="card mt-5 caret-neutral-50">
+                             <div id="dialogModal" style="padding-left: 20%;">
+                                 <div class="modal-content">
+                                      <a href="{{ url_for('showDashboard') }}"><span class="close-button">×</span></a>
+                                      <div class="error-label" style="text-align: left">Error</div>
+                                      <p class="message" style="text-align: left">{{ error_message }}</p>
+                                      <a class="btn prev-btn" href="{{ url_for('showDashboard') }}">Back</a>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </main>
+                <!-- Main Content End -->
+            </div>
+        </div>
+        <!-- End of project -->
+    </main>
+    {% include "partials/scripts.html" %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        function openModal() {
+            document.getElementById("dialogModal").style.display = "flex";
+        }
+        window.onload = function() {
+            openModal();
+        };
+    </script>
+
+</body>
+
+</html>
