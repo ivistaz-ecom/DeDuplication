@@ -104,6 +104,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "tailwind": "npx tailwindcss -i ./static/src/input.css -o ./static/css/output.css --watch"
+    
   },
   "keywords": [],
   "author": "",

@@ -517,6 +517,7 @@
                 const dataTableSection = document.getElementById('dataTableSection');
                 const fileType = document.getElementById('dropdown1').value;
                 const fileName = document.getElementById('dropdown2').value;
+                //adding data elements
                 const from_date = document.getElementById('from_date').value;
                 const to_date = document.getElementById('to_date').value;
                 const date_column = document.getElementById('date_column').value;
@@ -571,6 +572,7 @@
                     .then(response => {
 
                         if (!response.ok) {
+                            console.log(data.e)
                             return response.json().then(data => {
                                 console.error("Error Data:", data);
                                 throw new Error(data.message || 'Unknown error');
@@ -579,6 +581,7 @@
                         return response.json();
                     })
                     .then(data => {
+                        console.log(data)
                         if (data.status === "success") {
                             const dataTableContainer = document.getElementById('dataTableContainer');
                             dataTableContainer.innerHTML = data.data_table;

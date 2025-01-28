@@ -1079,6 +1079,7 @@
         document.getElementById('rearrange_button').addEventListener('click', function () {
                 //showLoader()
                 const list_of_all_column_names_to_rearrange = document.getElementById('list_of_all_column_names_to_rearrange').value;
+                console.log(list_of_all_column_names_to_rearrange);
                 fetch('/RearrangeReportColumns', {
                     method: 'POST',
                     headers: {

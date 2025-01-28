@@ -254,7 +254,9 @@
                                 <div class="card">
                                     <section class="flex flex-col pt-6">
                                         <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-                                            <!-- First line -->
+
+                                            <!-- Text Replacement -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="text_replacement" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -326,10 +328,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!--Horizontal Line-->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                            <!-- 2nd line added -->
+
+                                            <!-- Handle null value -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="handle_null_value" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -420,11 +425,12 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!--Horizontal Line-->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
 
-                                            <!-- 3rd line -->
+                                            <!-- Alter columns position & Import date-->
 
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="alter_column_date" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
@@ -517,10 +523,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!--Horizontal Line-->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                            <!-- 4th line -->
+
+                                            <!-- Mobile no. handling -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="handle_mobile_no" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST" >
                                                     <!-- Centered Main Label -->
@@ -599,10 +608,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!--Horizontal Line-->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                             <!-- 5th line -->
+
+                                            <!-- Email handling -->
+
                                             <div id="handle_email" class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST" >
                                                     <!-- Centered Main Label -->
@@ -680,10 +692,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!--Horizontal Line-->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                             <!-- 6th line -->
+
+                                            <!-- Handling Emoji -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="handle_emoji_translation" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -803,7 +818,9 @@
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                             <!-- 7th line -->
+
+                                            <!-- Rename column,Type conversion & Parsing date -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="handle_rename_type_conversion_date_parsing" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -907,10 +924,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            <!-- Horizontal Line -->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                            <!-- 8th line -->
+
+                                            <!-- State & city filter -->
+
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="handle_state_and_city" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -1001,6 +1021,11 @@
                                                                 <div class="dropdown-options" id="dropdown_list_city-options">
                                                                     <ul id="cities-options">
                                                                         <!-- Options will be populated here -->
+                                                                        {% for column in city_list %}
+                                                                           <li>{{column}}</li>
+                                                                        {% endfor %}
+                                                                        <li onclick="">None</li>
+
                                                                     </ul>
                                                                 </div>
                                                                 <input
@@ -1030,11 +1055,11 @@
                                                     </div>
                                                 </form>
                                             </div>
-
+                                            <!-- Horizontal Line -->
                                             <div class="container mx-auto">
                                                 <hr class="border-t border-blue-600 mx-12 mb-3">
                                             </div>
-                                             <!-- 9th line -->
+                                             <!-- Remove data -->
                                             <div class="p-6 space-y-4 md:space-y-6 sm:p-8 mb-2">
                                                 <form id="remove_data" class="flex flex-col gap-6 md:gap-8 mx-2 md:mx-8 lg:mx-16" method="POST">
                                                     <!-- Centered Main Label -->
@@ -1318,9 +1343,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(result => {
             // Handle the result from the server
              //hideLoader()
-            if (result.status==="error"){
+        
+            if(result.status=='error'){
                 alert(result.message)
             }
+
             //console.log(result);
 
             // You might want to update the UI or show a message here
@@ -1697,6 +1724,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoader();
         });
     });
+    
     /* State & city filter */
     document.getElementById('stateAndCityButton').addEventListener('click', function() {
         // Collect form data
@@ -1822,8 +1850,8 @@ document.addEventListener('DOMContentLoaded', function() {
         /* new added*/
 
     </script>
-
-
+ 
+    <!-- used for showing uploaded data by using predefined format by jquery datatables..-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script>
@@ -1840,7 +1868,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 loader.style.display = "none";
             }
         }
-
+      
         $(document).ready(function() {
             const showButton = document.getElementById('showButton');
             const dataTableSection = document.getElementById('dataTableSection');
@@ -1891,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     </script>
-    <!-- new code -->
+    <!-- used in the Email Handling  -->
      <script>
         document.addEventListener('DOMContentLoaded', function() {
             var textarea = document.getElementById('comments');
@@ -1909,7 +1937,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
     <!-- for email textarea -->
 
-    <script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('applyAlgo').addEventListener('click', function() {
         // Send AJAX request to Flask backend
@@ -1961,7 +1989,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                dropdown: dropdownValue,
+                dropdown4: dropdownValue,
                 email_domain_input: emailDomainValue
             })
         })
@@ -2037,6 +2065,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
 <script>
     function selectCitiesName(stateName) {
             document.getElementById('dropdown_list_state').value = stateName;

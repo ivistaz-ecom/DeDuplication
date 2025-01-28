@@ -1,0 +1,39 @@
+full_name,business_name,email,phone,state,city,date,platform
+Bob,Quick Eats,bob123@yahoo.com,8765432109,Karnataka,Bangalore,20/06/2023,fb
+Charlie,Sunrise Bakery,charlie.bakery@hotmail.com,7654321098,Delhi,New Delhi,01/12/2020,ig
+Alice,Happy Paws,alice123@gmail.com,9876543210,Maharashtra,Mumbai,30/09/2022,ig
+David,Tech Solutions,david.tech@gmail.com,6543210987,Tamil Nadu,Chennai,10/03/2024,fb
+Eve,Eve's Boutique,eve.boutique@outlook.com,5432109876,Uttar Pradesh,Lucknow,25/05/2022,fb
+John,Tech Hub,john.hub@hotmail.com,4321098765,Punjab,Chandigarh,18/11/2020,ig
+Sara,Ocean Waves,sara.ocean@yahoo.com,3210987654,Maharashtra,Pune,05/08/2023,fb
+Ankit,Digital Solutions,ankit.digital@gmail.com,2109876543,Rajasthan,Jaipur,14/04/2021,ig
+Priya,Sunshine Co,priya.sunshine@gmail.com,9876543210,Maharashtra,Mumbai,19/01/2024,ig
+Manoj,Speedy Delivery,manoj.delivery@yahoo.com,8765432109,Karnataka,Bangalore,22/07/2022,fb
+Lily,Creative Minds,lily.creative@gmail.com,7654321098,Tamil Nadu,Chennai,10/10/2020,ig
+Ravi,Smart Tech,ravi.tech@yahoo.com,1098765432,West Bengal,Kolkata,27/02/2023,fb
+Sonu,Fitness World,sonu.fitness@gmail.com,6543210987,Kerala,Trivandrum,03/03/2021,fb
+Nina,Design Studio,nina.design@gmail.com,5432109876,Tamil Nadu,Coimbatore,01/09/2024,ig
+Prakash,Foodies Delight,prakash.foodie@hotmail.com,4321098765,Karnataka,Mysuru,12/06/2020,ig
+Ravi,Tech Hub,ravi.hub@gmail.com,3210987654,Madhya Pradesh,Bhopal,25/12/2023,fb
+Suman,Smart Solutions,suman.smart@yahoo.com,2109876543,Bihar,Patna,30/01/2022,ig
+Kriti,Artistic Creations,kriti.artistic@gmail.com,1098765432,Odisha,Bhubaneswar,19/08/2021,fb
+Raj,Engineering Solutions,raj.engineer@gmail.com,9876543210,Madhya Pradesh,Jabalpur,09/05/2024,ig
+Anjali,Green Tech,anjali.green@gmail.com,8765432109,Tamil Nadu,Chennai,23/11/2020,fb
+Deepika,Design Labs,deepika.design@gmail.com,7654321098,Uttarakhand,Dehradun,07/10/2023,ig
+Mohan,Spice World,mohan.spice@gmail.com,6543210987,Kerala,Trivandrum,15/02/2021,fb
+Sneha,Wellness Centre,sneha.wellness@gmail.com,5432109876,Rajasthan,Jaipur,01/03/2024,ig
+Tanya,Global Ventures,tanya.global@yahoo.com,4321098765,Uttar Pradesh,Lucknow,17/06/2022,fb
+Rakesh,Mobile Solutions,rakesh.mobile@gmail.com,3210987654,Haryana,Ambala,12/12/2021,ig
+Krishna,Medical Innovations,krishna.medical@hotmail.com,2109876543,Uttarakhand,Dehradun,18/03/2023,fb
+Veena,Graphic Designs,veena.graphic@gmail.com,1098765432,Kerala,Trivandrum,26/04/2020,ig
+Pooja,Event Planners,pooja.events@gmail.com,9876543210,Maharashtra,Pune,03/11/2022,fb
+Amit,Tech Insights,amit.insights@yahoo.com,8765432109,Bihar,Patna,14/08/2024,ig
+Vikas,Online Shopping,vikas.shopping@gmail.com,7654321098,Karnataka,Bangalore,25/05/2021,fb
+Kiran,Home Decor,kiran.decor@hotmail.com,6543210987,Goa,Panaji,13/09/2023,ig
+Manju,Healthy Life,manju.healthy@gmail.com,5432109876,Uttarakhand,Dehradun,21/04/2022,fb
+Ashish,Real Estate,ashish.real@gmail.com,4321098765,Haryana,Gurgaon,08/08/2020,ig
+Rani,Beauty & Beyond,rani.beauty@gmail.com,3210987654,Gujarat,Surat,02/02/2024,fb
+Sasha,Cloud Computing,sasha.cloud@yahoo.com,2109876543,West Bengal,Kolkata,29/07/2021,ig
+Nidhi,Beauty Salon,nidhi.beauty@gmail.com,1098765432,Delhi,New Delhi,11/11/2023,fb
+Mithun,Digital World,mithun.digital@gmail.com,9876543210,Punjab,Amritsar,04/03/2022,ig
+Bipin,Art Gallery,bipin.art@hotmail.com,8765432109,West Bengal,Kolkata,15/01/2020,fb
